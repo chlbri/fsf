@@ -16,7 +16,5 @@ rules:
   indent: 0
   "@typescript-eslint/no-explicit-any": off
   linebreak-style: 0
-  quotes:
-    - warn
-    - single
+  quotes: 0
   semi: 0
