@@ -1,3 +1,4 @@
+---
 # package.json repo à changer
 
 tasks:
@@ -9,7 +10,7 @@ tasks:
       node .gitpod-config/bash.js
       git push
       gp sync-done build
-      
+
   - name: Creation of branches
     init: |
       gp sync-await build
@@ -24,7 +25,6 @@ tasks:
 vscode:
   extensions:
     - ms-azuretools.vscode-docker
-    - ms-ceintl.vscode-language-pack-fr
     - github.vscode-pull-request-github
     - eamodio.gitlens
     - graphql.vscode-graphql
