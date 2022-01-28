@@ -1,169 +1,272 @@
-export type StateFunction<
-  TC extends Record<string, unknown> = Record<string, unknown>,
-  TA = any,
-  R = any,
-> = (context?: TC, args?: TA) => R;
+import { asyncReturn0, asyncVoidNothing, voidNothing } from './helpers';
+
+export type StateFunction<TC = any, TA = any, R = any> = (
+  context?: TC,
+  args?: TA,
+) => R;
+
+export type SingleOrArray<T> = T | T[];
 
 export type TransitionDefinition<
-  TC extends Record<string, unknown>,
-  TA,
-  TT extends string,
+  TT extends string = string,
+  TC = any,
+  TA = any,
 > = {
   target: TT;
-  source?: TT;
+  source: TT;
   actions: StateFunction<TC, TA, void>[];
   conditions: StateFunction<TC, TA, boolean>[];
-  in: TT;
   description?: string;
 };
 
-export type StateValue = string | { [x: string]: string | StateValue };
-export type State<
-  TContext extends Record<string, unknown>,
-  TArgs,
-  TT extends string,
+export type StateDefinition<
+  TT extends string = string,
+  TContext = any,
+  TArgs = any,
+  R = any,
 > = {
   value: TT;
   matches: <T extends TT>(value: T) => boolean;
   context?: TContext;
   args?: TArgs;
+  entry: StateFunction<TContext, TArgs, void>[];
+  exit: StateFunction<TContext, TArgs, void>[];
 } & (
   | {
-      type?: 'simple';
-      transitions: TransitionDefinition<TContext, TArgs, TT>[];
+      type: 'sync';
+      transitions: TransitionDefinition<TT, TContext, TArgs>[];
     }
   | {
-      type: 'final';
+      type: 'async';
+      src: StateFunction<TContext, TArgs, Promise<R>>;
+      onDone: Omit<TransitionDefinition<TT, TContext, R>, 'conditions'>;
+      onError: Omit<TransitionDefinition<TT, TContext, any>, 'conditions'>;
+      timeout: number;
+      // finally: (context?: TContext) => void;
+    }
+  | {
+      type?: 'final';
     }
 );
 
-export type SingleOrArray<T> = T | T[];
-
-export type PromiseState<
-  TC extends Record<string, unknown> = Record<string, unknown>,
-  TA = any,
-  TT extends string = string,
-  R = any,
+export type Transition<
+  S extends string = string,
+  A extends string = string,
+  C extends string = string,
 > = {
-  type: 'promise';
-  value: TT;
-  matches: <T extends TT>(value: T) => boolean;
-  context?: TC;
-  args?: TA;
-  src: StateFunction<TC, TA, PromiseLike<R>>;
-  onDone: {
-    target: TT;
-    actions: SingleOrArray<StateFunction<TC, R, void>>;
-  };
-  onError: {
-    target: TT;
-    actions: SingleOrArray<StateFunction<TC, any, void>>;
-  };
-  onEnd?: {
-    target: TT;
-    actions: SingleOrArray<() => void>;
-  };
+  target: S;
+  conditions: SingleOrArray<C>;
+  actions: SingleOrArray<A>;
+  description?: string;
 };
 
-export type HierarchicalState<
-  TC extends Record<string, unknown> = Record<string, unknown>,
-  TA = any,
-  TT extends string = string,
-  R extends Record<string, any> = Record<string, any>,
+export type State<
+  S extends string = string,
+  A extends string = string,
+  C extends string = string,
+  P extends string = string,
+  O extends string = string,
+  E extends string = string,
+  T extends string | number = string | number,
 > = {
-  type: 'hierachical';
-  value?:TT,
-  context?: TC;
-  args?: TA;
-  states: Record<
-    TT,
-    | HierarchicalState<TC, TA, TT>
-    | SimpleState<TC, TA, TT>
-    | PromiseState<TC, TA, TT, R[string]>
-  >;
-  initial: TT;
-};
+  entry: SingleOrArray<A>;
+  exit: SingleOrArray<A>;
+  description?: string;
+} & (
+  | {
+      type: 'sync';
+      transitions: SingleOrArray<Transition<S, A, C>>;
+    }
+  | {
+      type: 'async';
+      src: P;
+      onDone: Omit<Transition<S, O>, 'conditions'>;
+      onError: Omit<Transition<S, E>, 'conditions'>;
+      timeout: T;
+      // finally: (context?: TContext) => void;
+    }
+  | {
+      type?: 'final';
+    }
+);
 
 export type Config<
-  TC extends Record<string, unknown> = Record<string, unknown>,
+  TC = any,
   TA = any,
   TT extends string = string,
-  C extends string = string,
-  R extends Record<string, any> = Record<string, any>,
+  R extends {
+    actions: string;
+    conditions: string;
+    promises: string;
+    timeouts: string | number;
+  } = {
+    actions: string;
+    conditions: string;
+    promises: string;
+    timeouts: string | number;
+  },
 > = {
-  type: 'hierachical';
-  id: C;
   context?: TC;
+  initial: TT;
   args?: TA;
   states: Record<
     TT,
-    | HierarchicalState<TC, TA, TT>
-    | SimpleState<TC, TA, TT>
-    | PromiseState<TC, TA, TT, R[string]>
+    State<
+      TT,
+      R['actions'],
+      R['conditions'],
+      R['promises'],
+      R['actions'],
+      R['actions'],
+      R['timeouts']
+    >
   >;
-  initial: TT;
 };
 
-function testHier<
-  TC extends Record<string, unknown> = Record<string, unknown>,
+export type ActionsMap<
+  TC,
+  TA,
+  A extends string,
+  P extends Record<
+    string,
+    {
+      src: string;
+      actionsDone: string;
+      errorsDone: string;
+    }
+  >,
+> = {
+  [key in A]?: StateFunction<TC, TA, void>;
+} & Partial<
+  {
+    [key in keyof P]: Record<
+      P[key]['actionsDone'],
+      StateFunction<TC, P[key]['src'], void>
+    >;
+  }[keyof P]
+> &
+  Partial<
+    {
+      [key in keyof P]: Record<
+        P[key]['errorsDone'],
+        StateFunction<TC, any, void>
+      >;
+    }[keyof P]
+  >;
+
+export type ConditionsMap<TC, TA, C extends string> = Partial<
+  Record<C, StateFunction<TC, TA, boolean>>
+>;
+
+export type PromisesMap<
+  TC,
+  TA,
+  P extends Record<
+    string,
+    {
+      src: any;
+      actionsDone: string;
+      errorsDone: string;
+    }
+  >,
+> = {
+  [key in keyof P]?: StateFunction<TC, TA, Promise<P[key]['src']>>;
+};
+
+export type Options<
+  TC = any,
   TA = any,
-  TT extends string = string,
-  R extends Record<string, any> = Record<string, any>,
->(arg: HierarchicalState<TC, TA, TT, R>) {
-  return true;
+  R extends {
+    actions: string;
+    conditions: string;
+    promises: Record<
+      string,
+      {
+        src: any;
+        actionsDone: string;
+        errorsDone: string;
+      }
+    >;
+    timeouts: string | number;
+  } = {
+    actions: string;
+    conditions: string;
+    promises: Record<
+      string,
+      {
+        src: any;
+        actionsDone: string;
+        errorsDone: string;
+      }
+    >;
+    timeouts: string | number;
+  },
+> = {
+  actions?: ActionsMap<TC, TA, R['actions'], R['promises']>;
+  conditions?: ConditionsMap<TC, TA, R['conditions']>;
+  promises?: PromisesMap<TC, TA, R['promises']>;
+  timeouts?: Record<R['timeouts'], number>;
+};
+
+function testConfig<
+  TC = any,
+  TA = any,
+  R extends {
+    actions: string;
+    conditions: string;
+    promises: Record<
+      string,
+      {
+        src: any;
+        actionsDone: string;
+        errorsDone: string;
+      }
+    >;
+    timeouts: string | number;
+  } = {
+    actions: string;
+    conditions: string;
+    promises: Record<
+      string,
+      {
+        src: any;
+        actionsDone: string;
+        errorsDone: string;
+      }
+    >;
+    timeouts: string | number;
+  },
+>(config: Options<TC, TA, R>) {
+  console.log(config);
 }
 
-testHier({
-  type: 'hierachical',
-  context: { oh: true },
-  args: [56, 'ert'],
-  states: {
-    other: {
-      value: 'other',
-      matches: val => val === 'other',
-      transitions: [],
-    },
-    success: {
-      value: 'success',
-      matches: val => val === 'success',
-      transitions: [],
-    },
-    error: {
-      value: 'error',
-      matches: val => val === 'error',
-      transitions: [],
-    },
-    promise: {
-      value: 'promise',
-      type: 'promise',
-      matches: val => val === 'promise',
-      src: async () => true,
-      onDone: {
-        target: 'success',
-        actions: [],
-      },
-      onError: {
-        target: 'error',
-        actions: [],
-      },
-    },
+testConfig<
+  number,
+  boolean,
+  {
+    actions: 'string';
+    conditions: string;
+    promises: Record<
+      'prom1' | 'prom2',
+      {
+        src: number;
+        actionsDone: 'allo';
+        errorsDone: 'toto';
+      }
+    >;
+    timeouts: string | number;
+  }
+>({
+  actions: {
+    string: voidNothing,
+    allo: voidNothing,
+    toto: voidNothing,
   },
-  initial: 'other',
+  promises: {
+    prom1: asyncReturn0,
+  },
+  timeouts: { aer: 0 },
 });
-
-export type SimpleState<
-  TC extends Record<string, unknown> = Record<string, unknown>,
-  TA = any,
-  TT extends string = string,
-  R = any,
-> = {
-  type?: 'simple';
-  value: TT;
-  matches: <T extends TT>(value: T) => boolean;
-  transitions: TransitionDefinition<TC, TA, TT>[];
-  context?: TC;
-  args?: TA;
-};
 
 const arr = [2, 3, 4];
 const _arr = arr.map(x => x + 1);
