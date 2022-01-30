@@ -1,58 +1,70 @@
-import { returnTrue, voidNothing } from './helpers';
 import {
+  asyncVoidNothing,
+  extractActions,
+  extractTransitions,
+  isAsync,
+  isFinal,
+  isSync,
+  promiseWithTimeout,
+} from './helpers';
+import type {
   Config,
   Options,
-  SingleOrArray,
-  State,
   StateDefinition,
-  StateFunction,
-  Transition,
   TransitionDefinition,
 } from './types';
 
-export class Machine<TT extends string = string, TC = any, TA = any> {
+export class Machine<TC = any, TA = any> {
   #context?: TC;
   #args?: TA;
   constructor(
-    private __allStates: StateDefinition<TT, TC, TA>[],
+    public states: StateDefinition<TC, TA>[],
+    private initial: string,
     private overflow = 100,
-    private test?: boolean,
+    public test = false,
   ) {
-    this.#initialeStates(__allStates);
-    if (!this.#args) throw 'No arguments';
-    this.#initializeArgs(this.#args);
+    this.#initialeStates(states, initial);
   }
 
-  #initialeStates(__allStates: StateDefinition<TT, TC, TA, any>[]) {
-    if (!__allStates[0]) throw 'No states';
-    if (!__allStates.some(value => !value.type || value.type === 'final'))
+  #initialeStates(
+    __allStates: StateDefinition<TC, TA>[],
+    initial: string,
+  ) {
+    if (__allStates.length < 1) throw 'No states';
+    if (!__allStates.some(value => value.type === 'final'))
       throw 'No final states';
-    if (__allStates[0].type === 'final')
-      throw 'First state cannot be final';
-    this.#currentState = __allStates[0];
-    this.#args = this.#currentState.args;
+
+    const findInitial = __allStates.find(state => state.value === initial);
+    if (!findInitial) throw 'No initial state';
+    if (findInitial.type === 'final') throw 'First state cannot be final';
+
+    this.#currentState = findInitial;
     this.#context = this.#currentState.context;
     this.test && this.enteredStates.push(this.#currentState);
   }
 
-  #initializeArgs(args: TA) {
-    const temp = this.__allStates.map(state => {
+  #hasNext = false;
+
+  #initializeArgs(args?: TA) {
+    const temp = this.states.map(state => {
       state.args = args;
       return state;
     });
-    this.__allStates.length = 0;
-    this.__allStates.push(...temp);
+    this.states.length = 0;
+    this.states.push(...temp);
   }
 
-  #setCurrentState(value: TT) {
+  #setCurrentState(value: string) {
     if (value === this.#currentState.value) {
       this.#currentState.context = this.#context;
       return;
     }
-    const out = this.__allStates.find(_state => (_state.value = value));
+    const out = this.states.find(_state => _state.value === value);
+
     if (!out) throw `No state for ${value}`;
     out.context = this.#context;
     this.#currentState = out;
+    this.#currentState.type = 'final';
     this.test && this.enteredStates.push(out);
   }
 
@@ -60,11 +72,21 @@ export class Machine<TT extends string = string, TC = any, TA = any> {
     const current = this.#currentState;
     const args = { ...this.#args } as TA;
     if (current.type === 'sync') {
+      this.#hasNext = true;
       const transitions = current.transitions;
       for (const transition of transitions) {
+        if (transition.conditions.length < 1) {
+          transition.actions.forEach(action =>
+            action(this.#context, args),
+          );
+
+          this.#setCurrentState(transition.target);
+
+          break;
+        }
         const cond = transition.conditions
           .map(condition => condition(this.#context, args))
-          .every(value => value);
+          .every(value => value === true);
         if (!cond) continue;
         transition.actions.forEach(action => action(this.#context, args));
         this.#setCurrentState(transition.target);
@@ -77,8 +99,12 @@ export class Machine<TT extends string = string, TC = any, TA = any> {
     const current = this.#currentState;
     const args = { ...this.#args } as TA;
     if (current.type === 'async') {
-      await current
-        .src(this.#context, args)
+      this.#hasNext = true;
+      const src = promiseWithTimeout({
+        timeoutMs: current.timeout,
+        promise: () => current.src(this.#context, args),
+      });
+      await src()
         .then(data => {
           const actions = current.onDone.actions;
           const target = current.onDone.target;
@@ -94,18 +120,36 @@ export class Machine<TT extends string = string, TC = any, TA = any> {
     }
   }
 
-  start() {
+  start(args: TA) {
     let iterator = 0;
-    while (this.#currentState.type !== 'final') {
+    this.#initializeArgs(args);
+    this.#args = args;
+    while (this.#hasNext && this.#currentState.type !== 'final') {
+      this.#hasNext = false;
       this.#nextSync();
       iterator++;
-      if (iterator <= this.overflow) {
+      if (iterator >= this.overflow) {
         throw 'Overflow transitions';
       }
     }
   }
 
-  #currentState!: StateDefinition<TT, TC, TA>;
+  async startAsync(args: TA) {
+    let iterator = 0;
+    this.#initializeArgs(args);
+    this.#args = args;
+    while (this.#hasNext && this.#currentState.type !== 'final') {
+      this.#hasNext = false;
+      this.#nextSync();
+      await this.#nextAsync();
+      iterator++;
+      if (iterator >= this.overflow) {
+        throw 'Overflow transitions';
+      }
+    }
+  }
+
+  #currentState!: StateDefinition<TC, TA>;
 
   get state() {
     return this.#currentState;
@@ -115,146 +159,119 @@ export class Machine<TT extends string = string, TC = any, TA = any> {
     return this.#context;
   }
 
-  enteredStates: StateDefinition<TT, TC, TA>[] = [];
-
-  get initialState(): StateDefinition<TT, TC, TA> {
-    return this.__allStates[0];
-  }
+  enteredStates: StateDefinition<TC, TA>[] = [];
 }
 
-export default function createMachine<
-  TC = any,
-  TA = any,
-  TT extends string = string,
-  R extends {
-    actions: string;
-    conditions: string;
-    promises: Record<
-      string,
-      {
-        src: string;
-        actionsDone: string;
-        errorsDone: string;
-      }
-    >;
-    timeouts: string | number;
-  } = {
-    actions: string;
-    conditions: string;
-    promises: Record<
-      string,
-      {
-        src: any;
-        actionsDone: string;
-        errorsDone: string;
-      }
-    >;
-    timeouts: string | number;
-  },
->(
-  config: Config<
-    TC,
-    TA,
-    TT,
-    {
-      actions: R['actions'];
-      conditions: R['conditions'];
-      promises: keyof R['promises'] extends string
-        ? keyof R['promises']
-        : string;
-      timeouts: R['timeouts'];
-    }
-  >,
-  options?: Options<TC, TA, R>,
+export default function createMachine<TC = any, TA = any>(
+  config: Config<TC, TA>,
+  options?: Options<TC, TA>,
 ) {
-  const states: StateDefinition<TT, TC, TA>[] = [];
-  const __states = Object.entries(config.states) as [TT, State<TT>][];
+  const initial = config.initial;
+  const states: StateDefinition<TC, TA>[] = [];
+  const __states = Object.entries(config.states);
 
   for (const [value, state] of __states) {
-    const matches = <T extends TT>(_value: T) => _value === value;
+    const matches = <T extends string>(_value: T) => _value === value;
     const source = value;
 
-    const __entry = state.entry as SingleOrArray<R['actions']>;
-    const entry: TransitionDefinition<TT, TC, TA>['actions'] = [];
-    const __exit = state.exit as SingleOrArray<R['actions']>;
-    const exit: TransitionDefinition<TT, TC, TA>['actions'] = [];
-    // #region Assign Entry & Exit
-    extractAction(__entry, entry);
-    extractAction(__exit, exit);
-    // #endregion
+    const entry = extractActions(state.entry);
+    const exit = extractActions(state.exit);
 
-    const transitions: TransitionDefinition<TT, TC, TA>[] = [];
-
-    if (state.type === 'sync') {
-      const type = state.type;
-      const __transitions = state.transitions;
-      if (Array.isArray(__transitions)) {
-        __transitions.forEach(extractTransition(transitions, source));
-      } else {
-        extractTransition(transitions, source)(__transitions);
-      }
-      states.push({ type, value, entry, exit, matches, transitions });
-    }
-    const __promises: string[] = [];
-
-    const __timeouts: string[] = [];
-  }
-
-  function extractAction(
-    strings: SingleOrArray<R['actions']>,
-    functions: StateFunction<TC, TA, void>[],
-  ) {
-    if (Array.isArray(strings)) {
-      functions.push(
-        ...strings.map(_entry => {
-          return options?.actions?.[_entry] ?? voidNothing;
-        }),
-      );
-    } else {
-      functions.push(options?.actions?.[strings] ?? voidNothing);
-    }
-  }
-
-  function extractConditions(
-    strings: SingleOrArray<R['conditions']>,
-    functions: StateFunction<TC, TA, boolean>[],
-  ) {
-    if (Array.isArray(strings)) {
-      functions.push(
-        ...strings.map(_entry => {
-          return options?.conditions?.[_entry] ?? returnTrue;
-        }),
-      );
-    } else {
-      functions.push(options?.conditions?.[strings] ?? returnTrue);
-    }
-  }
-
-  function extractTransition(
-    transitions: TransitionDefinition<TT, TC, TA>[],
-    source: TT,
-  ): (value: Transition<TT, string, string>) => void {
-    return __transition => {
-      const target = __transition.target;
-      const description = __transition.description;
-      const __actions = __transition.actions as SingleOrArray<
-        R['actions']
-      >;
-      const actions: TransitionDefinition<TT, TC, TA>['actions'] = [];
-      const __conditions = __transition.conditions as SingleOrArray<
-        R['conditions']
-      >;
-      const conditions: TransitionDefinition<TT, TC, TA>['conditions'] =
-        [];
-      extractAction(__actions, actions);
-      extractConditions(__conditions, conditions);
-      transitions.push({
-        actions,
-        conditions,
-        target,
-        source,
-        description,
+    if (isSync(state)) {
+      states.push({
+        type: state.type ?? 'sync',
+        value,
+        entry,
+        exit,
+        matches,
+        transitions: extractTransitions(
+          source,
+          state?.transitions,
+          options,
+        ),
       });
-    };
+      continue;
+    }
+
+    if (isAsync(state)) {
+      const src = options?.promises?.[state.src] ?? asyncVoidNothing;
+
+      // #region Build onDone
+      const onDone: Omit<TransitionDefinition<TC, any>, 'conditions'> = {
+        source,
+        target: state.onDone.target,
+        actions: extractActions(state.onDone.actions, options?.actions),
+        description: state.onDone.description,
+      };
+      // #endregion
+
+      // #region Build onErrror
+      const onError: Omit<TransitionDefinition<TC, any>, 'conditions'> = {
+        source,
+        target: state.onError.target,
+        actions: extractActions(state.onError.actions, options?.actions),
+        description: state.onError.description,
+      };
+      // #endregion
+
+      // #region Build timeout
+      const timeout = options?.timeouts?.[state.timeout] ?? 400;
+
+      // #endregion
+
+      states.push({
+        type: state.type ?? 'async',
+        value,
+        entry,
+        exit,
+        matches,
+        src,
+        onDone,
+        onError,
+        timeout,
+      });
+      continue;
+    }
+
+    if (isFinal(state)) {
+      states.push({
+        type: state.type ?? 'final',
+        value,
+        entry,
+        exit,
+        matches,
+      });
+      continue;
+    }
   }
+
+  return new Machine(states, initial);
 }
+
+const machine = createMachine(
+  {
+    initial: 'idle',
+    states: {
+      idle: {
+        // type: 'async',
+        transitions: [
+          {
+            target: 'trt',
+          },
+        ],
+      },
+      trt: {
+        type: 'final',
+      },
+    },
+  },
+  {},
+);
+
+//
+// console.log(JSON.stringify(machine.states, null, 2));
+console.log('Value ======>');
+console.log(machine.state.value);
+machine.start(undefined);
+console.log('Value ======>');
+console.log(machine.state.value);
