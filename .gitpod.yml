@@ -21,6 +21,11 @@ tasks:
       git checkout -b upgrade
       git push -u origin upgrade
       git checkout dev
+      gp sync-done branch
+
+  - name: Commands
+    init: gp sync-await branch
+    command: yarn run build
 
 vscode:
   extensions:

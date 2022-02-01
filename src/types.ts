@@ -16,8 +16,6 @@ export type TransitionDefinition<TC = any, TA = any> = {
 export type StateDefinition<TC = any, TA = any> = {
   value: string;
   matches: <T extends string>(value: T) => boolean;
-  context?: TC;
-  args?: TA;
   entry: StateFunction<TC, TA, void>[];
   exit: StateFunction<TC, TA, void>[];
 } & (
@@ -88,8 +86,13 @@ export type FinalState = _BaseState & {
 
 export type State = SyncState | AsyncState | FinalState;
 
-export type Config<TC = any, TA = any> = {
-  context?: TC;
+export type Config<TC = any, TA = any> = TC extends undefined ? {
+  context: TC;
+  initial: string;
+  args?: TA;
+  states: Record<string, State>;
+}:{
+  context: TC;
   initial: string;
   args?: TA;
   states: Record<string, State>;

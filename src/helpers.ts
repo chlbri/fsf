@@ -59,6 +59,7 @@ export function extractActions<TC = any, TA = any>(
 }
 
 export function extractTransitionFunction<TC = any, TA = any>(
+  strings: string[],
   source: string,
   options?: {
     actions?: Record<string, StateFunction<TC, TA, void>>;
@@ -67,6 +68,12 @@ export function extractTransitionFunction<TC = any, TA = any>(
 ): (value: Transition) => TransitionDefinition<TC, TA> {
   return transition => {
     const target = transition.target;
+    if (!strings.includes(target)) {
+      throw `No state for "${target}"`;
+    }
+    if (source === target) {
+      throw 'Cannot transit to himself';
+    }
     const description = transition.description;
 
     const actions = extractActions(transition.actions);
@@ -87,6 +94,7 @@ export function extractTransitionFunction<TC = any, TA = any>(
 }
 
 export function extractTransitions<TC = any, TA = any>(
+  strings: string[],
   source: string,
   transitions?: SingleOrArray<Transition>,
   options?: {
@@ -99,11 +107,13 @@ export function extractTransitions<TC = any, TA = any>(
 
   if (Array.isArray(transitions)) {
     functions.push(
-      ...transitions.map(extractTransitionFunction(source, options)),
+      ...transitions.map(
+        extractTransitionFunction(strings, source, options),
+      ),
     );
   } else {
     functions.push(
-      extractTransitionFunction(source, options)(transitions),
+      extractTransitionFunction(strings, source, options)(transitions),
     );
   }
   return functions;
