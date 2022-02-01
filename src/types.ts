@@ -86,17 +86,19 @@ export type FinalState = _BaseState & {
 
 export type State = SyncState | AsyncState | FinalState;
 
-export type Config<TC = any, TA = any> = TC extends undefined ? {
-  context: TC;
-  initial: string;
-  args?: TA;
-  states: Record<string, State>;
-}:{
-  context: TC;
-  initial: string;
-  args?: TA;
-  states: Record<string, State>;
-};
+export type Config<TC = any, TA = any> = TC extends undefined
+  ? {
+      context: TC;
+      initial: string;
+      args?: TA;
+      states: Record<string, State>;
+    }
+  : {
+      context: TC;
+      initial: string;
+      args?: TA;
+      states: Record<string, State>;
+    };
 
 export type Options<TC = any, TA = any> = {
   actions?: Record<string, StateFunction<TC, any, any>>;

@@ -1,5 +1,6 @@
-import { promiseWithTimeout } from "./helpers";
-import type { StateDefinition } from "./types";
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { promiseWithTimeout } from './helpers';
+import type { StateDefinition } from './types';
 
 export class Machine<TA = any, TC = any> {
   #args!: TA;

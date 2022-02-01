@@ -9,7 +9,8 @@
   "private": true,
   "scripts": {
     "tsc": "tsc",
-    "build": "yarn run tsc && yarn run lint",
+    "build:-test": "yarn run tsc && yarn run lint",
+    "build": "yarn run test && yarn run build:-test",
     "test": "jest",
     "prettier": "prettier --write \"src/**/*.{ts,tsx}\"",
     "eslint": "eslint \"{src/**/*,App}.{ts,tsx}\"",
