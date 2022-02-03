@@ -1,23 +1,23 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { promiseWithTimeout } from './helpers';
-import type { StateDefinition } from './types';
+import { isAsyncDef, isSyncDef, promiseWithTimeout } from './helpers';
+import type { StateDefinition, StateType } from './types';
 
-export class Machine<TA = any, TC = any> {
+export class Machine<TA = any, TC = any, T extends StateType = StateType> {
   #args!: TA;
   readonly #async: boolean;
   constructor(
-    private states: StateDefinition<TC, TA>[],
+    public _states: StateDefinition<TA, TC, T>[],
     private initial: string,
     private context: TC,
     private overflow = 100,
     public test = false,
   ) {
-    this.#initializeStates(states, initial);
-    this.#async = states.some(state => state.type === 'async');
+    this.#initializeStates(_states, initial);
+    this.#async = _states.some(state => state.type === 'async');
   }
 
   #initializeStates(
-    __allStates: StateDefinition<TC, TA>[],
+    __allStates: StateDefinition<TA, TC, T>[],
     initial: string,
   ) {
     if (__allStates.length < 1) throw 'No states';
@@ -36,7 +36,7 @@ export class Machine<TA = any, TC = any> {
   #hasNext = true;
 
   #setCurrentState(value: string) {
-    const out = this.states.find(_state => _state.value === value);
+    const out = this._states.find(_state => _state.value === value);
     this.#currentState = out!;
     this.test && this.enteredStates.push(out!);
   }
@@ -44,7 +44,7 @@ export class Machine<TA = any, TC = any> {
   #nextSync() {
     const current = { ...this.#currentState };
     const args = { ...this.#args };
-    if (current.type === 'sync') {
+    if (isSyncDef(current)) {
       this.#hasNext = true;
       const transitions = current.transitions;
       for (const transition of transitions) {
@@ -69,8 +69,9 @@ export class Machine<TA = any, TC = any> {
   async #nextAsync() {
     const current = this.#currentState;
     const args = { ...this.#args } as TA;
-    if (current.type === 'async') {
+    if (isAsyncDef(current)) {
       this.#hasNext = true;
+
       const src = promiseWithTimeout({
         timeoutMs: current.timeout,
         promise: () => current.src(this.context, args),
@@ -123,7 +124,7 @@ export class Machine<TA = any, TC = any> {
     return this.context;
   };
 
-  #currentState!: StateDefinition<TC, TA>;
+  #currentState!: StateDefinition<TA, TC, T>;
 
   get state() {
     return this.#currentState;
@@ -133,5 +134,13 @@ export class Machine<TA = any, TC = any> {
     return this.context;
   }
 
-  enteredStates: StateDefinition<TC, TA>[] = [];
+  enteredStates: StateDefinition<TA, TC>[] = [];
 }
+
+// export type GetTA<T extends Machine> = T extends Machine<infer U>
+//   ? U
+//   : never;
+
+// export type GetTC<T extends Machine> = T extends Machine<any, infer U>
+//   ? U
+//   : never;

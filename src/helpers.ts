@@ -1,14 +1,18 @@
 import {
+  AsyncState,
+  AsyncStateDefinition,
+  FinalState,
+  FinalStateDefinition,
+  PromiseWithTimeoutArgs,
   SAS,
-  StateFunction,
-  Transition,
-  TransitionDefinition,
   SingleOrArray,
   State,
-  FinalState,
+  StateDefinition,
+  StateFunction,
   SyncState,
-  AsyncState,
-  PromiseWithTimeoutArgs,
+  SyncStateDefinition,
+  Transition,
+  TransitionDefinition,
 } from './types';
 
 export const returnTrue = () => true;
@@ -120,15 +124,15 @@ export function extractTransitions<TC = any, TA = any>(
 }
 
 export function isSync(state: State): state is SyncState {
-  return state.type === 'sync' || !!state.transitions;
+  return state.type === 'sync';
 }
 
 export function isAsync(state: State): state is AsyncState {
-  return state.type === 'async' || !!state.src;
+  return state.type === 'async';
 }
 
 export function isFinal(state: State): state is FinalState {
-  return state.type === 'final' || (!state.transitions && !state.src);
+  return state.type === 'final';
 }
 
 export function promiseWithTimeout<T>({
@@ -149,4 +153,22 @@ export function promiseWithTimeout<T>({
       clearTimeout(timeoutHandle);
       return result;
     });
+}
+
+export function isSyncDef<TA = any, TC = any>(
+  state: StateDefinition<TA, TC>,
+): state is SyncStateDefinition<TA, TC> {
+  return state.type === 'sync';
+}
+
+export function isAsyncDef<TA = any, TC = any>(
+  state: StateDefinition<TA, TC>,
+): state is AsyncStateDefinition<TA, TC> {
+  return state.type === 'async';
+}
+
+export function isFinalDef<TA = any, TC = any>(
+  state: StateDefinition<TA, TC>,
+): state is FinalStateDefinition<TA, TC> {
+  return state.type === 'final';
 }

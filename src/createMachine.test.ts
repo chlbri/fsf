@@ -1,14 +1,16 @@
-import { createMachine } from './createMachine';
 import { ttest } from '@core_chlbri/test';
+import { createMachine } from './createMachine';
+import { serve, serve2 } from './serve';
 
 describe('Problems to configure', () => {
   describe('Machine have empty states', () => {
     const func = () =>
-      createMachine<boolean>({
+      createMachine({
         initial: 'nostate',
         context: undefined,
         states: {},
       });
+
     ttest({
       func,
       tests: [
@@ -26,7 +28,7 @@ describe('Problems to configure', () => {
 
   describe("Machine doesn't have final states", () => {
     const func = () =>
-      createMachine<boolean>({
+      createMachine({
         initial: 'nostate',
         context: undefined,
         states: {
@@ -55,7 +57,7 @@ describe('Problems to configure', () => {
 
   describe('Machine, initial state not exists', () => {
     const func = () =>
-      createMachine<boolean>({
+      createMachine({
         initial: 'nostate',
         context: undefined,
         states: {
@@ -79,7 +81,7 @@ describe('Problems to configure', () => {
 
   describe('Machine, initial state is final', () => {
     const func = () =>
-      createMachine<boolean>({
+      createMachine({
         initial: 'idle',
         context: undefined,
         states: {
@@ -103,7 +105,7 @@ describe('Problems to configure', () => {
 
   describe('Machine cannot transit to himself', () => {
     const func = () =>
-      createMachine<boolean>({
+      createMachine({
         initial: 'idle',
         context: undefined,
         states: {
@@ -142,7 +144,7 @@ describe('Problems to configure', () => {
 
   describe("Machine, one target state doesn't exist", () => {
     const func = () =>
-      createMachine<boolean>({
+      createMachine({
         initial: 'idle',
         context: undefined,
         states: {
@@ -183,23 +185,15 @@ describe('Problems to configure', () => {
 describe('Working', () => {
   describe('Errors', () => {
     describe('Machine have an infinite loop state', () => {
-      const machine = createMachine<boolean>(
+      const machine = createMachine<'sync'>(
         {
           initial: 'idle',
           context: undefined,
           states: {
             idle: {
-              // type: 'async',
-              transitions: [
-                {
-                  conditions: 'test',
-                  target: 'next',
-                },
-              ],
+              transitions: [],
             },
-            next: {
-              type: 'final',
-            },
+            next: {},
           },
         },
         {
@@ -208,6 +202,9 @@ describe('Working', () => {
           },
         },
       );
+
+      const server = serve(machine);
+
       const func = machine.start;
       ttest({
         func,
@@ -231,7 +228,7 @@ describe('Working', () => {
       });
     });
     describe('Machine, async when sync', () => {
-      const machine = createMachine<boolean>(
+      const machine = createMachine(
         {
           initial: 'idle',
           context: undefined,
