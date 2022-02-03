@@ -263,6 +263,7 @@ describe('Working', () => {
         tests: [
           {
             args: true,
+            throws:false
             // thrown: 'No all cases are handled for state "idle"',
           },
           {

@@ -23,7 +23,7 @@
     "git-push": "git push --tags"
   },
   "devDependencies": {
-    "@core_chlbri/test": "^0.0.13",
+    "@core_chlbri/test": "https://github.com/chlbri/core-test.git#9ca4d74533114ce8844c75c395824f6c9161fa7d",
     "@types/faker": "^6.6.9",
     "@types/jest": "^27.4.0",
     "@typescript-eslint/eslint-plugin": "^5.10.1",
