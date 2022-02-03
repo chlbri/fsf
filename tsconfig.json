@@ -1,5 +1,5 @@
 {
-  "include": ["test", "src"],
+  "include": ["src"],
   // "files": ["globals.d.ts"],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
@@ -71,5 +71,15 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": false /* Disallow inconsistently-cased references to the same file. */
   },
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "__test__",
+    "src/**/*.test.ts",
+    "src/**/*.ttest.ts",
+    "src/**/*.test.js",
+    "src/__setupTests.ts",
+    "src/__setupTests.js"
+  ]
 }

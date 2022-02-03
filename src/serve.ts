@@ -1,21 +1,21 @@
 import { Machine } from './machine';
-// import type {GetTA, GetTC,} from './machine'
-import { StateType } from './types';
 
 type ReturnType<
+  AS extends true | undefined = undefined,
   TA = any,
   TC = any,
-  T extends StateType = StateType,
-> = 'async' extends T ? (args: TA) => Promise<TC> : (args: TA) => TC;
+> = AS extends true ? (args: TA) => Promise<TC> : (args: TA) => TC;
 
-export function serve<T extends StateType = StateType, TA = any, TC = any>(
-  machine: Machine<TA, TC, T>,
-): ReturnType<TA, TC, T> {
+export function serve<
+  AS extends true | undefined = undefined,
+  TA = any,
+  TC = any,
+>(machine: Machine<AS, TA, TC>): ReturnType<AS, TA, TC> {
   const checkAsync = machine._states.some(state => state.type === 'async');
   return (checkAsync ? machine.startAsync : machine.start) as ReturnType<
+    AS,
     TA,
-    TC,
-    T
+    TC
   >;
 }
 

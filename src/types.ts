@@ -13,7 +13,7 @@ export type TransitionDefinition<TC = any, TA = any> = {
   description?: string;
 };
 
-export type StateType = 'sync' | 'async' | 'final';
+export type StateType = 'sync' | 'async' | 'final' | 'unexpected';
 
 export type BaseStateDefinition<
   TA = any,
@@ -27,19 +27,19 @@ export type BaseStateDefinition<
   type: T;
 };
 
-export type SyncStateDefinition<
-  TA = any,
-  TC = any,
-  T extends StateType = StateType,
-> = BaseStateDefinition<TA, TC, T> & {
+export type SyncStateDefinition<TA = any, TC = any> = BaseStateDefinition<
+  TA,
+  TC,
+  'sync'
+> & {
   transitions: TransitionDefinition<TC, TA>[];
 };
 
-export type AsyncStateDefinition<
-  TA = any,
-  TC = any,
-  T extends StateType = StateType,
-> = BaseStateDefinition<TC, TA, T> & {
+export type AsyncStateDefinition<TA = any, TC = any> = BaseStateDefinition<
+  TC,
+  TA,
+  'async'
+> & {
   src: StateFunction<TC, TA, Promise<any>>;
   onDone: Omit<TransitionDefinition<TC, any>, 'conditions'>;
   onError: Omit<TransitionDefinition<TC, any>, 'conditions'>;
@@ -47,20 +47,24 @@ export type AsyncStateDefinition<
   finally?: (context?: TC) => void;
 };
 
-export type FinalStateDefinition<
-  TC = any,
-  TA = any,
-  T extends StateType = StateType,
-> = BaseStateDefinition<TC, TA, T>;
+export type FinalStateDefinition<TC = any, TA = any> = BaseStateDefinition<
+  TC,
+  TA,
+  'final'
+>;
 
-export type StateDefinition<
-  TA = any,
-  TC = any,
-  T extends StateType = StateType,
-> =
-  | SyncStateDefinition<TA, TC, T>
-  | AsyncStateDefinition<TA, TC, T>
-  | FinalStateDefinition<TA, TC, T>;
+export type UnexpectedStateDefinition = {
+  type: 'unexpected';
+  value:string
+};
+
+export type USD = UnexpectedStateDefinition;
+
+export type StateDefinition<TA = any, TC = any> =
+  | SyncStateDefinition<TA, TC>
+  | AsyncStateDefinition<TA, TC>
+  | FinalStateDefinition<TA, TC>
+  | USD;
 
 export type PromiseWithTimeoutArgs<T> = {
   timeoutMs: number;
@@ -110,23 +114,23 @@ export type FinalState = _BaseState & {
   timeout?: undefined;
 };
 
-export type State<T extends StateType = StateType> = T extends 'sync'
-  ? SyncState
-  : T extends 'async'
-  ? AsyncState
-  : FinalState;
+export type State = SyncState | AsyncState | FinalState;
 
-export type Config<TA = any, TC = any, T extends StateType = StateType> = {
+export type Config<TA = any, TC = any> = {
   context: TC;
   initial: string;
   args?: TA;
-  states: Record<string, State<T>>;
+  states: Record<string, State>;
 };
 
-export type Options<TC = any, TA = any> = {
+export type Options<
+  AS extends true | undefined = undefined,
+  TC = any,
+  TA = any,
+> = {
   actions?: Record<string, StateFunction<TC, any, any>>;
   conditions?: Record<string, StateFunction<TC, TA, boolean>>;
   promises?: Record<string, StateFunction<TC, TA, Promise<any>>>;
   timeouts?: Record<string, number>;
+  async?: AS;
 };
-

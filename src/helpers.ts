@@ -124,15 +124,15 @@ export function extractTransitions<TC = any, TA = any>(
 }
 
 export function isSync(state: State): state is SyncState {
-  return state.type === 'sync';
+  return state.type === 'sync' || !!state.transitions;
 }
 
 export function isAsync(state: State): state is AsyncState {
-  return state.type === 'async';
+  return state.type === 'async' || !!state.src;
 }
 
 export function isFinal(state: State): state is FinalState {
-  return state.type === 'final';
+  return state.type === 'final' || (!state.transitions && !state.src);
 }
 
 export function promiseWithTimeout<T>({

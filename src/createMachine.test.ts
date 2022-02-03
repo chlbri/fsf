@@ -1,6 +1,5 @@
 import { ttest } from '@core_chlbri/test';
 import { createMachine } from './createMachine';
-import { serve, serve2 } from './serve';
 
 describe('Problems to configure', () => {
   describe('Machine have empty states', () => {
@@ -184,49 +183,6 @@ describe('Problems to configure', () => {
 
 describe('Working', () => {
   describe('Errors', () => {
-    describe('Machine have an infinite loop state', () => {
-      const machine = createMachine<'sync'>(
-        {
-          initial: 'idle',
-          context: undefined,
-          states: {
-            idle: {
-              transitions: [],
-            },
-            next: {},
-          },
-        },
-        {
-          conditions: {
-            test: () => false,
-          },
-        },
-      );
-
-      const server = serve(machine);
-
-      const func = machine.start;
-      ttest({
-        func,
-        tests: [
-          {
-            args: true,
-            throws: true,
-            // thrown: 'No all cases are handled for state "idle"',
-          },
-          {
-            args: false,
-            throws: true,
-            // thrown: 'No all cases are handled for state "idle"',
-          },
-          {
-            args: false,
-            throws: true,
-            thrown: 'No all cases are handled for state "idle"',
-          },
-        ],
-      });
-    });
     describe('Machine, async when sync', () => {
       const machine = createMachine(
         {
@@ -253,6 +209,7 @@ describe('Working', () => {
           },
         },
       );
+
       const func = machine.startAsync;
       ttest({
         func,
@@ -271,6 +228,86 @@ describe('Working', () => {
             args: false,
             throws: true,
             thrown: 'no async state',
+          },
+        ],
+      });
+    });
+
+    describe.only('Machine, sync when async', () => {
+      const machine = createMachine(
+        {
+          initial: 'idle',
+          context: undefined,
+          states: {
+            idle: {
+              // type: 'async',
+              src: 'promise',
+              onDone: { target: 'next' },
+              onError: { target: 'next' },
+
+              timeout: 'timeout',
+            },
+            next: {},
+          },
+        },
+        {
+          conditions: {
+            test: () => false,
+          },
+        },
+      );
+
+      const func = machine.startAsync;
+      ttest({
+        func,
+        tests: [
+          {
+            args: true,
+            // thrown: 'No all cases are handled for state "idle"',
+          },
+          {
+            args: false,
+            // thrown: 'No all cases are handled for state "idle"',
+          },
+        ],
+      });
+    });
+  });
+
+  describe('Works', () => {
+    describe('Machine have an infinite loop state', () => {
+      const machine = createMachine(
+        {
+          initial: 'idle',
+          context: undefined,
+          states: {
+            idle: {
+              transitions: [],
+            },
+            next: {},
+          },
+        },
+        {
+          conditions: {
+            test: () => false,
+          },
+        },
+      );
+
+      const func = machine.start;
+      ttest({
+        func,
+        tests: [
+          {
+            args: true,
+            // thrown: 'No all cases are handled for state "idle"',
+          },
+          {
+            args: false,
+            // thrown: 'No all cases are handled for state "idle"',
+          },
+          {
+            args: false,
           },
         ],
       });

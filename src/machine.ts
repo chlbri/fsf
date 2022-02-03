@@ -1,25 +1,37 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { isAsyncDef, isSyncDef, promiseWithTimeout } from './helpers';
-import type { StateDefinition, StateType } from './types';
+import type { StateDefinition, USD } from './types';
 
-export class Machine<TA = any, TC = any, T extends StateType = StateType> {
+const unexpectedState: USD = {
+  type: 'unexpected',
+  value: 'fstate.unexpected',
+};
+
+export class Machine<
+  AS extends true | undefined = undefined,
+  TA = any,
+  TC = any,
+> {
   #args!: TA;
-  readonly #async: boolean;
+  readonly #containsAsyncStates: boolean;
   constructor(
-    public _states: StateDefinition<TA, TC, T>[],
+    public _states: StateDefinition<TA, TC>[],
     private initial: string,
     private context: TC,
+    public async?: AS,
     private overflow = 100,
     public test = false,
   ) {
-    this.#initializeStates(_states, initial);
-    this.#async = _states.some(state => state.type === 'async');
+    this.#initializeStates();
+    this.#initializeTransitions();
+    this.#containsAsyncStates = _states.some(
+      state => state.type === 'async',
+    );
   }
 
-  #initializeStates(
-    __allStates: StateDefinition<TA, TC, T>[],
-    initial: string,
-  ) {
+  #initializeStates() {
+    const __allStates = this._states;
+    const initial = this.initial;
     if (__allStates.length < 1) throw 'No states';
     if (!__allStates.some(value => value.type === 'final'))
       throw 'No final states';
@@ -29,8 +41,24 @@ export class Machine<TA = any, TC = any, T extends StateType = StateType> {
     if (findInitial.type === 'final') throw 'First state cannot be final';
 
     this.#currentState = findInitial;
+    this._states.push(unexpectedState);
 
     this.test && this.enteredStates.push(this.#currentState);
+  }
+
+  #initializeTransitions() {
+    const __temp = this._states.map(state => {
+      if (isSyncDef(state)) {
+        state.transitions.push({
+          target: unexpectedState.value,
+          source: state.value,
+          actions: [],
+          conditions: [],
+        });
+      }
+      return state;
+    });
+    this._states = __temp;
   }
 
   #hasNext = true;
@@ -56,13 +84,6 @@ export class Machine<TA = any, TC = any, T extends StateType = StateType> {
         this.#setCurrentState(transition.target);
         break;
       }
-    }
-    this.#handleAllCases(current.value);
-  }
-
-  #handleAllCases(value: string) {
-    if (value === this.#currentState.value) {
-      throw `No all cases are handled for state "${this.state.value}"`;
     }
   }
 
@@ -90,11 +111,10 @@ export class Machine<TA = any, TC = any, T extends StateType = StateType> {
           this.#setCurrentState(target);
         });
     }
-    this.#handleAllCases(current.value);
   }
 
   readonly start = (args: TA) => {
-    if (this.#async) throw 'async state exists';
+    if (this.#containsAsyncStates) throw 'async state exists';
     let iterator = 0;
     this.#args = args;
     while (this.#hasNext && this.#currentState.type !== 'final') {
@@ -109,7 +129,9 @@ export class Machine<TA = any, TC = any, T extends StateType = StateType> {
   };
 
   readonly startAsync = async (args: TA) => {
-    if (!this.#async) throw 'no async state';
+    console.log('contains', '=>', this.#containsAsyncStates);
+
+    if (!this.#containsAsyncStates) throw 'no async state';
     let iterator = 0;
     this.#args = args;
     while (this.#hasNext && this.#currentState.type !== 'final') {
@@ -124,7 +146,7 @@ export class Machine<TA = any, TC = any, T extends StateType = StateType> {
     return this.context;
   };
 
-  #currentState!: StateDefinition<TA, TC, T>;
+  #currentState!: StateDefinition<TA, TC>;
 
   get state() {
     return this.#currentState;

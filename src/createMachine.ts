@@ -8,27 +8,20 @@ import {
 } from './helpers';
 import { Machine } from './machine';
 import type {
-  AsyncStateDefinition,
   Config,
-  FinalStateDefinition,
   Options,
   StateDefinition,
-  StateType,
-  SyncStateDefinition,
   TransitionDefinition,
 } from './types';
 
 export function createMachine<
-  T extends StateType = StateType,
+  AS extends true | undefined = undefined,
   TA = any,
   TC = any,
->(
-  config: Config<TA, TC, T | 'final' | 'sync'>,
-  options?: Options<TC, TA>,
-) {
+>(config: Config<TA, TC>, options?: Options<AS, TC, TA>) {
   const context = config.context;
   const initial = config.initial;
-  const states: StateDefinition<TA, TC, T>[] = [];
+  const states: StateDefinition<TA, TC>[] = [];
   const __states = Object.entries(config.states);
   const stringStates = __states.map(([key]) => key);
 
@@ -52,7 +45,7 @@ export function createMachine<
           state?.transitions,
           options,
         ),
-      } as SyncStateDefinition<TA, TC,T>);
+      });
       continue;
     }
 
@@ -92,7 +85,7 @@ export function createMachine<
         onDone,
         onError,
         timeout,
-      } as AsyncStateDefinition<TA, TC,T>);
+      });
       continue;
     }
 
@@ -103,10 +96,10 @@ export function createMachine<
         entry,
         exit,
         matches,
-      } as FinalStateDefinition<TA, TC,T>);
+      });
       continue;
     }
   }
 
-  return new Machine(states, initial, context);
+  return new Machine(states, initial, context, options?.async);
 }
