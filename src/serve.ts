@@ -11,8 +11,11 @@ export function serve<
   TA = any,
   TC = any,
 >(machine: Machine<AS, TA, TC>): ReturnType<AS, TA, TC> {
-  const checkAsync = machine._states.some(state => state.type === 'async');
-  return (checkAsync ? machine.startAsync : machine.start) as ReturnType<
+  const _machine = machine.clone;
+  const checkAsync = _machine._states.some(
+    state => state.type === 'async',
+  );
+  return (checkAsync ? _machine.startAsync : _machine.start) as ReturnType<
     AS,
     TA,
     TC

@@ -14,6 +14,7 @@ export class Machine<
 > {
   #args!: TA;
   readonly #containsAsyncStates: boolean;
+  readonly #initialContext: TC;
   constructor(
     public _states: StateDefinition<TA, TC>[],
     private initial: string,
@@ -22,10 +23,32 @@ export class Machine<
     private overflow = 100,
     public test = false,
   ) {
+    this.#initialContext = context;
     this.#initializeStates();
     this.#initializeTransitions();
     this.#containsAsyncStates = _states.some(
       state => state.type === 'async',
+    );
+  }
+
+  get clone() {
+    return new Machine(
+      this._states,
+      this.initial,
+      this.#initialContext,
+      this.async,
+      this.overflow,
+    );
+  }
+
+  get cloneTest() {
+    return new Machine(
+      this._states,
+      this.initial,
+      this.#initialContext,
+      this.async,
+      this.overflow,
+      true,
     );
   }
 
@@ -43,7 +66,7 @@ export class Machine<
     this.#currentState = findInitial;
     this._states.push(unexpectedState);
 
-    this.test && this.enteredStates.push(this.#currentState);
+    this.test && this.enteredStates.push(this.#currentState.value);
   }
 
   #initializeTransitions() {
@@ -66,7 +89,7 @@ export class Machine<
   #setCurrentState(value: string) {
     const out = this._states.find(_state => _state.value === value);
     this.#currentState = out!;
-    this.test && this.enteredStates.push(out!);
+    this.test && this.enteredStates.push(out!.value);
   }
 
   #nextSync() {
@@ -156,7 +179,7 @@ export class Machine<
     return this.context;
   }
 
-  enteredStates: StateDefinition<TA, TC>[] = [];
+  enteredStates: string[] = [];
 }
 
 // export type GetTA<T extends Machine> = T extends Machine<infer U>
