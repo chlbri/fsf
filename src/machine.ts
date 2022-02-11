@@ -131,7 +131,7 @@ export class Machine<
   readonly startAsync = async (args: TA) => {
     console.log('contains', '=>', this.#containsAsyncStates);
 
-    if (!this.#containsAsyncStates) throw 'no async state';
+    if (!this.test && !this.#containsAsyncStates) throw 'no async state';
     let iterator = 0;
     this.#args = args;
     while (this.#hasNext && this.#currentState.type !== 'final') {
