@@ -9,16 +9,18 @@ import {
 import { Machine } from './machine';
 import type {
   Config,
+  DFS,
   Options,
+  State,
   StateDefinition,
   TransitionDefinition,
 } from './types';
 
 export function createMachine<
-  AS extends true | undefined = undefined,
   TA = any,
-  TC = any,
->(config: Config<TA, TC>, options?: Options<AS, TC, TA>) {
+  TC extends Record<string, unknown> = Record<string, unknown>,
+  S extends State = State,
+>(config: Config<TA, TC, S>, options?: Options<TC, TA>) {
   const context = config.context;
   const initial = config.initial;
   const states: StateDefinition<TA, TC>[] = [];
@@ -42,7 +44,7 @@ export function createMachine<
         transitions: extractTransitions(
           stringStates,
           source,
-          state?.transitions,
+          state.transitions,
           options,
         ),
       });
@@ -50,24 +52,25 @@ export function createMachine<
     }
 
     if (isAsync(state)) {
-      const src = options?.promises?.[state.src] ?? asyncVoidNothing;
+      const promise =
+        options?.promises?.[state.promise] ?? asyncVoidNothing;
 
       // #region Build onDone
-      const onDone: Omit<TransitionDefinition<TC, any>, 'conditions'> = {
+      const onDone: TransitionDefinition<TC, any>[] = extractTransitions(
+        stringStates,
         source,
-        target: state.onDone.target,
-        actions: extractActions(state.onDone.actions, options?.actions),
-        description: state.onDone.description,
-      };
+        state.onDone,
+        options,
+      );
       // #endregion
 
       // #region Build onErrror
-      const onError: Omit<TransitionDefinition<TC, any>, 'conditions'> = {
+      const onError: TransitionDefinition<TC, any>[] = extractTransitions(
+        stringStates,
         source,
-        target: state.onError.target,
-        actions: extractActions(state.onError.actions, options?.actions),
-        description: state.onError.description,
-      };
+        state.onError,
+        options,
+      );
       // #endregion
 
       // #region Build timeout
@@ -81,7 +84,7 @@ export function createMachine<
         entry,
         exit,
         matches,
-        src,
+        promise,
         onDone,
         onError,
         timeout,
@@ -101,5 +104,9 @@ export function createMachine<
     }
   }
 
-  return new Machine(states, initial, context, options?.async);
+  return new Machine<TA, TC, DFS<TA, TC, S>>(
+    states as DFS<TA, TC, S>[],
+    initial,
+    context,
+  );
 }

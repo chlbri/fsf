@@ -80,7 +80,7 @@ export function extractTransitionFunction<TC = any, TA = any>(
     }
     const description = transition.description;
 
-    const actions = extractActions(transition.actions);
+    const actions = extractActions(transition.actions, options?.actions);
 
     const conditions = extractConditions(
       transition.conditions,
@@ -124,15 +124,15 @@ export function extractTransitions<TC = any, TA = any>(
 }
 
 export function isSync(state: State): state is SyncState {
-  return state.type === 'sync' || !!state.transitions;
+  return state.type === 'sync';
 }
 
 export function isAsync(state: State): state is AsyncState {
-  return state.type === 'async' || !!state.src;
+  return state.type === 'async';
 }
 
 export function isFinal(state: State): state is FinalState {
-  return state.type === 'final' || (!state.transitions && !state.src);
+  return state.type === 'final';
 }
 
 export function promiseWithTimeout<T>({

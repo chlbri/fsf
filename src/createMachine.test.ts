@@ -1,317 +1,71 @@
-import { ttest } from '@core_chlbri/test';
 import { createMachine } from './createMachine';
+import { testMachine } from './testMachine';
 
-describe('Problems to configure', () => {
-  describe('Machine have empty states', () => {
-    const func = () =>
-      createMachine({
-        initial: 'nostate',
-        context: undefined,
-        states: {},
-      });
-
-    ttest({
-      func,
-      tests: [
-        {
-          throws: true,
-          // thrown: 'No all cases are handled for state "idle"',
-        },
-        {
-          throws: true,
-          thrown: 'No states',
-        },
-      ],
-    });
-  });
-
-  describe("Machine doesn't have final states", () => {
-    const func = () =>
-      createMachine({
-        initial: 'nostate',
-        context: undefined,
-        states: {
-          state1: {
-            transitions: [],
-          },
-          state2: {
-            transitions: [],
-          },
-        },
-      });
-    ttest({
-      func,
-      tests: [
-        {
-          throws: true,
-          // thrown: 'No all cases are handled for state "idle"',
-        },
-        {
-          throws: true,
-          thrown: 'No final states',
-        },
-      ],
-    });
-  });
-
-  describe('Machine, initial state not exists', () => {
-    const func = () =>
-      createMachine({
-        initial: 'nostate',
-        context: undefined,
-        states: {
-          state1: {},
-        },
-      });
-    ttest({
-      func,
-      tests: [
-        {
-          throws: true,
-          // thrown: 'No all cases are handled for state "idle"',
-        },
-        {
-          throws: true,
-          thrown: 'No initial state',
-        },
-      ],
-    });
-  });
-
-  describe('Machine, initial state is final', () => {
-    const func = () =>
-      createMachine({
-        initial: 'idle',
-        context: undefined,
-        states: {
-          idle: {},
-        },
-      });
-    ttest({
-      func,
-      tests: [
-        {
-          throws: true,
-          // thrown: 'No all cases are handled for state "idle"',
-        },
-        {
-          throws: true,
-          thrown: 'First state cannot be final',
-        },
-      ],
-    });
-  });
-
-  describe('Machine cannot transit to himself', () => {
-    const func = () =>
-      createMachine({
-        initial: 'idle',
-        context: undefined,
-        states: {
-          idle: {
-            // type: 'async',
-            transitions: [
-              {
-                conditions: 'test',
-                target: 'idle',
-              },
-            ],
-          },
-          next: {
-            type: 'final',
-          },
-        },
-      });
-    ttest({
-      func,
-      tests: [
-        {
-          throws: true,
-          // thrown: 'No all cases are handled for state "idle"',
-        },
-        {
-          throws: true,
-          // thrown: 'No all cases are handled for state "idle"',
-        },
-        {
-          throws: true,
-          thrown: 'Cannot transit to himself',
-        },
-      ],
-    });
-  });
-
-  describe("Machine, one target state doesn't exist", () => {
-    const func = () =>
-      createMachine({
-        initial: 'idle',
-        context: undefined,
-        states: {
-          idle: {
-            // type: 'async',
-            transitions: [
-              {
-                conditions: 'test',
-                target: 'notexits',
-              },
-            ],
-          },
-          next: {
-            type: 'final',
-          },
-        },
-      });
-    ttest({
-      func,
-      tests: [
-        {
-          throws: true,
-          // thrown: 'No all cases are handled for state "idle"',
-        },
-        {
-          throws: true,
-          // thrown: 'No all cases are handled for state "idle"',
-        },
-        {
-          throws: true,
-          thrown: 'No state for "notexits"',
-        },
-      ],
-    });
-  });
-});
-
-describe('Working', () => {
-  describe('Errors', () => {
-    describe('Machine, async when sync', () => {
-      const machine = createMachine(
-        {
-          initial: 'idle',
-          context: undefined,
-          states: {
-            idle: {
-              // type: 'async',
-              transitions: [
-                {
-                  conditions: 'test',
-                  target: 'next',
-                },
-              ],
-            },
-            next: {
-              type: 'final',
-            },
-          },
-        },
-        {
-          conditions: {
-            test: () => false,
-          },
-        },
-      );
-
-      const func = machine.startAsync;
-      ttest({
-        func,
-        tests: [
+const machine = createMachine(
+  {
+    tsTypes: {
+      args: {} as number,
+      context: {} as { val: string },
+    },
+    context: { val: '' },
+    initial: 'idle',
+    states: {
+      idle: {
+        type: 'sync',
+        transitions: [
           {
-            args: true,
-            throws: true,
-            // thrown: 'No all cases are handled for state "idle"',
-          },
-          {
-            args: false,
-            throws: true,
-            // thrown: 'No all cases are handled for state "idle"',
-          },
-          {
-            args: false,
-            throws: true,
-            thrown: 'no async state',
+            target: 'prom',
           },
         ],
-      });
-    });
-
-    describe.only('Machine, sync when async', () => {
-      const machine = createMachine(
-        {
-          initial: 'idle',
-          context: undefined,
-          states: {
-            idle: {
-              // type: 'async',
-              src: 'promise',
-              onDone: { target: 'next' },
-              onError: { target: 'next' },
-
-              timeout: 'timeout',
-            },
-            next: {},
-          },
-        },
-        {
-          conditions: {
-            test: () => false,
-          },
-        },
-      );
-
-      const func = machine.startAsync;
-      ttest({
-        func,
-        tests: [
+      },
+      prom: {
+        type: 'async',
+        promise: 'prom',
+        onDone: [
           {
-            args: true,
-            throws:false
-            // thrown: 'No all cases are handled for state "idle"',
-          },
-          {
-            args: false,
-            // thrown: 'No all cases are handled for state "idle"',
+            target: 'finish',
+            actions: ['ok'],
           },
         ],
-      });
-    });
-  });
+        onError: [],
+        timeout: '0',
+      },
+      finish: { type: 'final' },
+    },
+  },
+  {
+    promises: {
+      prom: async () => true,
+    },
+    actions: {
+      ok: ctx => {
+        ctx.val = 'true';
+      },
+    },
+  },
+);
 
-  describe('Works', () => {
-    describe('Machine have an infinite loop state', () => {
-      const machine = createMachine(
-        {
-          initial: 'idle',
-          context: undefined,
-          states: {
-            idle: {
-              transitions: [],
-            },
-            next: {},
-          },
-        },
-        {
-          conditions: {
-            test: () => false,
-          },
-        },
-      );
-
-      const func = machine.start;
-      ttest({
-        func,
-        tests: [
-          {
-            args: true,
-            // thrown: 'No all cases are handled for state "idle"',
-          },
-          {
-            args: false,
-            // thrown: 'No all cases are handled for state "idle"',
-          },
-          {
-            args: false,
-          },
-        ],
-      });
-    });
+describe('Machine', () => {
+  testMachine({
+    machine,
+    tests: [
+      {
+        args: 2,
+        enteredStates: ['idle', 'prom', 'finish'],
+      },
+      {
+        args: 12,
+        enteredStates: ['idle', 'prom', 'finish'],
+      },
+      {
+        args: 2,
+        expected: { val: 'true' },
+      },
+      {
+        args: 3,
+        expected: { val: 'true' },
+        enteredStates: ['idle', 'prom', 'finish'],
+      },
+    ],
   });
 });

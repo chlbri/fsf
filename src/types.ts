@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/ban-types */
 export type StateFunction<TC = any, TA = any, R = any> = (
-  context?: TC,
-  args?: TA,
+  context: TC,
+  args: TA,
 ) => R;
 
 export type SingleOrArray<T> = T | T[];
@@ -40,9 +41,9 @@ export type AsyncStateDefinition<TA = any, TC = any> = BaseStateDefinition<
   TA,
   'async'
 > & {
-  src: StateFunction<TC, TA, Promise<any>>;
-  onDone: Omit<TransitionDefinition<TC, any>, 'conditions'>;
-  onError: Omit<TransitionDefinition<TC, any>, 'conditions'>;
+  promise: StateFunction<TC, TA, Promise<any>>;
+  onDone: TransitionDefinition<TC, any>[];
+  onError: TransitionDefinition<TC, any>[];
   timeout: number;
   finally?: (context?: TC) => void;
 };
@@ -55,7 +56,7 @@ export type FinalStateDefinition<TC = any, TA = any> = BaseStateDefinition<
 
 export type UnexpectedStateDefinition = {
   type: 'unexpected';
-  value:string
+  value: string;
 };
 
 export type USD = UnexpectedStateDefinition;
@@ -88,49 +89,58 @@ type _BaseState = {
 };
 
 export type SyncState = _BaseState & {
-  type?: 'sync';
+  type: 'sync';
   transitions: SingleOrArray<Transition>;
-  src?: undefined;
-  onDone?: undefined;
-  onError?: undefined;
-  timeout?: undefined;
 };
 
 export type AsyncState = _BaseState & {
-  type?: 'async';
-  src: string;
-  onDone: Omit<Transition, 'conditions'>;
-  onError: Omit<Transition, 'conditions'>;
+  type: 'async';
+  promise: string;
+  onDone: Transition[];
+  onError: Transition[];
   timeout: string;
-  transitions?: undefined;
 };
 
 export type FinalState = _BaseState & {
-  type?: 'final';
-  transitions?: undefined;
-  src?: undefined;
-  onDone?: undefined;
-  onError?: undefined;
-  timeout?: undefined;
+  type: 'final';
 };
 
 export type State = SyncState | AsyncState | FinalState;
 
-export type Config<TA = any, TC = any> = {
+export type DefinitionFromState<
+  TA = any,
+  TC = any,
+  S extends State = State,
+> =
+  | (
+      | ('sync' extends S['type'] ? SyncStateDefinition<TA, TC> : never)
+      | ('async' extends S['type'] ? AsyncStateDefinition<TA, TC> : never)
+      | ('final' extends S['type'] ? FinalStateDefinition<TA, TC> : never)
+    )
+  | USD;
+
+export type DFS<
+  TA = any,
+  TC = any,
+  S extends State = State,
+> = DefinitionFromState<TA, TC, S>;
+
+export type Config<TA = any, TC = any, S extends State = State> = {
   context: TC;
   initial: string;
   args?: TA;
-  states: Record<string, State>;
+  tsTypes?: {
+    context?: TC;
+    args?: TA;
+    // states?:
+  };
+  states: Record<string, S>;
 };
 
-export type Options<
-  AS extends true | undefined = undefined,
-  TC = any,
-  TA = any,
-> = {
+export type Options<TC = any, TA = any> = {
   actions?: Record<string, StateFunction<TC, any, any>>;
   conditions?: Record<string, StateFunction<TC, TA, boolean>>;
   promises?: Record<string, StateFunction<TC, TA, Promise<any>>>;
   timeouts?: Record<string, number>;
-  async?: AS;
+  async?: true | undefined;
 };

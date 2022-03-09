@@ -8,18 +8,17 @@ const unexpectedState: USD = {
 };
 
 export class Machine<
-  AS extends true | undefined = undefined,
   TA = any,
-  TC = any,
+  TC extends Record<string, unknown> = Record<string, unknown>,
+  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
 > {
   #args!: TA;
   readonly #containsAsyncStates: boolean;
   readonly #initialContext: TC;
   constructor(
-    public _states: StateDefinition<TA, TC>[],
+    public _states: (S | USD)[],
     private initial: string,
     private context: TC,
-    public async?: AS,
     private overflow = 100,
     public test = false,
   ) {
@@ -36,7 +35,6 @@ export class Machine<
       this._states,
       this.initial,
       this.#initialContext,
-      this.async,
       this.overflow,
     );
   }
@@ -46,7 +44,6 @@ export class Machine<
       this._states,
       this.initial,
       this.#initialContext,
-      this.async,
       this.overflow,
       true,
     );
@@ -100,7 +97,7 @@ export class Machine<
       const transitions = current.transitions;
       for (const transition of transitions) {
         const cond = transition.conditions
-          .map(condition => condition(this.context, args))
+          .map(condition => condition({ ...this.context }, args))
           .every(value => value === true);
         if (!cond) continue;
         transition.actions.forEach(action => action(this.context, args));
@@ -112,26 +109,42 @@ export class Machine<
 
   async #nextAsync() {
     const current = this.#currentState;
-    const args = { ...this.#args } as TA;
+    const args = { ...this.#args };
     if (isAsyncDef(current)) {
       this.#hasNext = true;
-
       const src = promiseWithTimeout({
         timeoutMs: current.timeout,
-        promise: () => current.src(this.context, args),
+        promise: () => current.promise({ ...this.context }, args),
       });
       await src()
         .then(data => {
-          const actions = current.onDone.actions;
-          const target = current.onDone.target;
-          actions.forEach(action => action(this.context, data));
-          this.#setCurrentState(target);
+          const transitions = current.onDone;
+          for (const transition of transitions) {
+            const cond = transition.conditions
+              .map(condition => condition({ ...this.context }, data))
+              .every(value => value === true);
+
+            if (!cond) continue;
+            transition.actions.forEach(action => {
+              action(this.context, args);
+            });
+            this.#setCurrentState(transition.target);
+            break;
+          }
         })
         .catch(error => {
-          const actions = current.onError.actions;
-          const target = current.onError.target;
-          actions.forEach(action => action(this.context, error));
-          this.#setCurrentState(target);
+          const transitions = current.onError;
+          for (const transition of transitions) {
+            const cond = transition.conditions
+              .map(condition => condition({ ...this.context }, error))
+              .every(value => value === true);
+            if (!cond) continue;
+            transition.actions.forEach(action =>
+              action(this.context, error),
+            );
+            this.#setCurrentState(transition.target);
+            break;
+          }
         });
     }
   }
@@ -152,8 +165,6 @@ export class Machine<
   };
 
   readonly startAsync = async (args: TA) => {
-    console.log('contains', '=>', this.#containsAsyncStates);
-
     if (!this.test && !this.#containsAsyncStates) throw 'no async state';
     let iterator = 0;
     this.#args = args;
@@ -169,7 +180,7 @@ export class Machine<
     return this.context;
   };
 
-  #currentState!: StateDefinition<TA, TC>;
+  #currentState!: S | USD;
 
   get state() {
     return this.#currentState;
