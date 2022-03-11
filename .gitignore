@@ -120,6 +120,9 @@ yarn.lock
 
 # End of https://www.toptal.com/developers/gitignore/api/node
 
+#Apple
+**/.DS_Store
+
 # dotenv environment variables file
 .env
 .env.test
