@@ -13,27 +13,27 @@
 
 ## Features
 
-|                               | **@xstate/fsm** |
-| ----------------------------- | :-------------: |
-| Finite states                 |       ✅        |
-| Initial state                 |       ✅        |
-| Transitions (object)          |       ❌        |
-| Transitions (string target)   |       ✅        |
-| Delayed transitions           |       ❌        |
-| Eventless transitions         |       ✅        |
-| Nested states                 |       ❌        |
-| Parallel states               |       ❌        |
-| History states                |       ❌        |
-| Final states                  |       ❌        |
-| Context                       |       ✅        |
-| Entry actions                 |       ❌        |
-| Exit actions                  |       ❌        |
-| Transition actions            |       ✅        |
-| Parameterized actions         |       ❌        |
-| Transition guards             |       ✅        |
-| Parameterized guards          |       ❌        |
-| Spawned actors                |       ❌        |
-| Invoked actors(promises only) |       ✅        |
+|                               | **'@bemedev/fstate'** |
+| ----------------------------- | :-------------------: |
+| Finite states                 |          ✅           |
+| Initial state                 |          ✅           |
+| Transitions (object)          |          ❌           |
+| Transitions (string target)   |          ✅           |
+| Delayed transitions           |          ❌           |
+| Eventless transitions         |          ✅           |
+| Nested states                 |          ❌           |
+| Parallel states               |          ❌           |
+| History states                |          ❌           |
+| Final states                  |          ❌           |
+| Context                       |          ✅           |
+| Entry actions                 |          ❌           |
+| Exit actions                  |          ❌           |
+| Transition actions            |          ✅           |
+| Parameterized actions         |          ❌           |
+| Transition guards             |          ✅           |
+| Parameterized guards          |          ❌           |
+| Spawned actors                |          ❌           |
+| Invoked actors(promises only) |          ✅           |
 
 <br/>
 <br/>
@@ -117,7 +117,7 @@ const machine = createMachine(
 <br/>
 
 ```ts
-import { createMachine, interpret } from '@xstate/fsm';
+import { createMachine, interpret } from '@bemedev/fstate';
 const toggleMachine = createMachine({...});
 //Serve infer the return type (the context is the return type of the function)
 //Also it infers the fact that serve will be an async function or not
