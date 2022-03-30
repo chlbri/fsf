@@ -13,6 +13,7 @@
     "tsc": "tsc"
   },
   "devDependencies": {
+    "@bemedev/npm-publish": "^0.0.1-pnpm2",
     "@types/faker": "^6.6.9",
     "@types/jest": "^27.4.0",
     "@typescript-eslint/eslint-plugin": "^5.10.2",
@@ -25,13 +26,13 @@
     "jest": "^27.5.0",
     "jest-cucumber": "^3.0.1",
     "jest-extended": "^2.0.0",
+    "nanoid": "^3.2.0",
     "prettier": "^2.5.1",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
     "ts-jest": "^27.1.3",
     "tsd": "^0.9.0",
-    "typescript": "^4.5.5",
-    "nanoid": "^3.2.0"
+    "typescript": "^4.5.5"
   },
   "dependencies": {
     "dequal": "^2.0.2"

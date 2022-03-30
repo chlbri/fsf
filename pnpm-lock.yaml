@@ -1,6 +1,7 @@
 lockfileVersion: 5.3
 
 specifiers:
+  '@bemedev/npm-publish': ^0.0.1-pnpm2
   '@types/faker': ^6.6.9
   '@types/jest': ^27.4.0
   '@typescript-eslint/eslint-plugin': ^5.10.2
@@ -26,6 +27,7 @@ dependencies:
   dequal: 2.0.2
 
 devDependencies:
+  '@bemedev/npm-publish': 0.0.1-pnpm2
   '@types/faker': 6.6.9
   '@types/jest': 27.4.1
   '@typescript-eslint/eslint-plugin': 5.14.0_f4054b8c3cd621db16ae1b9d571bccc0
@@ -376,6 +378,14 @@ packages:
 
   /@bcoe/v8-coverage/0.2.3:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
+    dev: true
+
+  /@bemedev/npm-publish/0.0.1-pnpm2:
+    resolution: {integrity: sha512-dC5w4It5uiLHhxSRjvQpfaZ10Gzq9YrDM3AWJSPtX6eD410S6MR27a/Y05iMg539SmK1PRFPt78dFv7F7SOtUw==}
+    dependencies:
+      dotenv: 16.0.0
+      edit-json-file: 1.7.0
+      shelljs: 0.8.5
     dev: true
 
   /@cnakazawa/watch/1.0.4:
@@ -2019,6 +2029,11 @@ packages:
     engines: {node: '>=4'}
     dependencies:
       is-obj: 1.0.1
+    dev: true
+
+  /dotenv/16.0.0:
+    resolution: {integrity: sha512-qD9WU0MPM4SWLPJy/r2Be+2WgQj8plChsyrCNQzW/0WjvcJQiKQJ9mH3ZgB3fxbUUxgc/11ZJ0Fi5KiimWGz2Q==}
+    engines: {node: '>=12'}
     dev: true
 
   /duplexer3/0.1.4:
