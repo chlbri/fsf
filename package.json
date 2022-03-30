@@ -9,7 +9,8 @@
   "private": true,
   "scripts": {
     "postinstall": "pnpm test",
-    "test": "jest"
+    "test": "jest",
+    "tsc": "tsc"
   },
   "devDependencies": {
     "@types/faker": "^6.6.9",

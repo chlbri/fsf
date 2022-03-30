@@ -36,7 +36,7 @@ export function createMachine<
 
     if (isSync(state)) {
       states.push({
-        type: state.type ?? 'sync',
+        type: state.type,
         value,
         entry,
         exit,
@@ -79,7 +79,7 @@ export function createMachine<
       // #endregion
 
       states.push({
-        type: state.type ?? 'async',
+        type: state.type,
         value,
         entry,
         exit,
@@ -94,7 +94,7 @@ export function createMachine<
 
     if (isFinal(state)) {
       states.push({
-        type: state.type ?? 'final',
+        type: state.type,
         value,
         entry,
         exit,

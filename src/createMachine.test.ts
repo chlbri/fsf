@@ -1,4 +1,5 @@
 import { createMachine } from './createMachine';
+import { serve } from './serve';
 import { testMachine } from './testMachine';
 
 const machine = createMachine(
@@ -44,6 +45,8 @@ const machine = createMachine(
     },
   },
 );
+
+serve(machine);
 
 describe('Machine', () => {
   testMachine({
