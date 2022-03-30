@@ -75,6 +75,7 @@
     "node_modules",
     "dist",
     "test",
+    "lib",
     "__test__",
     "src/**/*.test.ts",
     "src/**/*.ttest.ts",
