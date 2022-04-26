@@ -3,7 +3,6 @@ import {
   extractActions,
   extractTransitions,
   isAsync,
-  isFinal,
   isSync,
 } from './helpers';
 import { Machine } from './machine';
@@ -17,10 +16,11 @@ import type {
 } from './types';
 
 export function createMachine<
-  TA = any,
+  TA = undefined,
   TC extends Record<string, unknown> = Record<string, unknown>,
   S extends State = State,
->(config: Config<TA, TC, S>, options?: Options<TC, TA>) {
+  D = TC,
+>(config: Config<TA, TC, S, D>, options?: Options<TC, TA>) {
   const context = config.context;
   const initial = config.initial;
   const states: StateDefinition<TA, TC>[] = [];
@@ -91,22 +91,17 @@ export function createMachine<
       });
       continue;
     }
-
-    if (isFinal(state)) {
-      states.push({
-        type: state.type,
-        value,
-        entry,
-        exit,
-        matches,
-      });
-      continue;
-    }
   }
 
-  return new Machine<TA, TC, DFS<TA, TC, S>>(
-    states as DFS<TA, TC, S>[],
-    initial,
+  const dataF = config.data;
+  const overflow = options?.overflow;
+  const _states = states as DFS<TA, TC, S>[];
+
+  return new Machine<TA, TC, DFS<TA, TC, S>, D>({
+    _states,
     context,
-  );
+    initial,
+    dataF,
+    overflow,
+  });
 }

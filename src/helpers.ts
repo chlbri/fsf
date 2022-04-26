@@ -1,8 +1,8 @@
 import {
   AsyncState,
   AsyncStateDefinition,
-  FinalState,
-  FinalStateDefinition,
+  FinalStateTarget,
+  FINAL_TARGET,
   PromiseWithTimeoutArgs,
   SAS,
   SingleOrArray,
@@ -25,6 +25,8 @@ export const voidNothing = () => void undefined;
 export const return0 = () => 0;
 export const asyncVoidNothing = async () => void undefined;
 export const asyncReturn0 = async () => 0;
+
+export const identity = <T>(x: T) => x;
 
 export function extractConditions<TC = any, TA = any>(
   strings?: SAS,
@@ -72,9 +74,13 @@ export function extractTransitionFunction<TC = any, TA = any>(
 ): (value: Transition) => TransitionDefinition<TC, TA> {
   return transition => {
     const target = transition.target;
-    if (!strings.includes(target)) {
+    const someStateNotExists =
+      !(target === FINAL_TARGET) && !strings.includes(target as string);
+
+    if (someStateNotExists) {
       throw `No state for "${target}"`;
     }
+
     if (source === target) {
       throw 'Cannot transit to himself';
     }
@@ -131,8 +137,10 @@ export function isAsync(state: State): state is AsyncState {
   return state.type === 'async';
 }
 
-export function isFinal(state: State): state is FinalState {
-  return state.type === 'final';
+export function isFinalTarget(
+  value: string | FinalStateTarget,
+): value is FinalStateTarget {
+  return value === FINAL_TARGET;
 }
 
 export function promiseWithTimeout<T>({
@@ -165,10 +173,4 @@ export function isAsyncDef<TA = any, TC = any>(
   state: StateDefinition<TA, TC>,
 ): state is AsyncStateDefinition<TA, TC> {
   return state.type === 'async';
-}
-
-export function isFinalDef<TA = any, TC = any>(
-  state: StateDefinition<TA, TC>,
-): state is FinalStateDefinition<TA, TC> {
-  return state.type === 'final';
 }

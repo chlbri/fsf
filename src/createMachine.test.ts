@@ -1,12 +1,13 @@
 import { createMachine } from './createMachine';
 import { serve } from './serve';
 import { testMachine } from './testMachine';
+import { FINAL_TARGET } from './types';
 
 const machine = createMachine(
   {
     tsTypes: {
-      args: {} as number,
       context: {} as { val: string },
+      // data: {} as boolean,
     },
     context: { val: '' },
     initial: 'idle',
@@ -24,15 +25,15 @@ const machine = createMachine(
         promise: 'prom',
         onDone: [
           {
-            target: 'finish',
+            target: FINAL_TARGET,
             actions: ['ok'],
           },
         ],
         onError: [],
         timeout: '0',
       },
-      finish: { type: 'final' },
     },
+    // data: () => true,
   },
   {
     promises: {
@@ -46,28 +47,24 @@ const machine = createMachine(
   },
 );
 
-serve(machine);
+const c = serve(machine);
+c();
 
 describe('Machine', () => {
   testMachine({
     machine,
     tests: [
       {
-        args: 2,
-        enteredStates: ['idle', 'prom', 'finish'],
+        enteredStates: ['idle', 'prom'],
       },
+
       {
-        args: 12,
-        enteredStates: ['idle', 'prom', 'finish'],
-      },
-      {
-        args: 2,
         expected: { val: 'true' },
       },
       {
-        args: 3,
+        // args: 3,
         expected: { val: 'true' },
-        enteredStates: ['idle', 'prom', 'finish'],
+        enteredStates: ['idle', 'prom'],
       },
     ],
   });

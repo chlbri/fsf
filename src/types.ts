@@ -7,14 +7,14 @@ export type StateFunction<TC = any, TA = any, R = any> = (
 export type SingleOrArray<T> = T | T[];
 
 export type TransitionDefinition<TC = any, TA = any> = {
-  target: string;
+  target: string | FinalStateTarget;
   source: string;
   actions: StateFunction<TC, TA, void>[];
   conditions: StateFunction<TC, TA, boolean>[];
   description?: string;
 };
 
-export type StateType = 'sync' | 'async' | 'final' | 'unexpected';
+export type StateType = 'sync' | 'async';
 
 export type BaseStateDefinition<
   TA = any,
@@ -48,24 +48,9 @@ export type AsyncStateDefinition<TA = any, TC = any> = BaseStateDefinition<
   finally?: (context?: TC) => void;
 };
 
-export type FinalStateDefinition<TC = any, TA = any> = BaseStateDefinition<
-  TC,
-  TA,
-  'final'
->;
-
-export type UnexpectedStateDefinition = {
-  type: 'unexpected';
-  value: string;
-};
-
-export type USD = UnexpectedStateDefinition;
-
 export type StateDefinition<TA = any, TC = any> =
   | SyncStateDefinition<TA, TC>
-  | AsyncStateDefinition<TA, TC>
-  | FinalStateDefinition<TA, TC>
-  | USD;
+  | AsyncStateDefinition<TA, TC>;
 
 export type PromiseWithTimeoutArgs<T> = {
   timeoutMs: number;
@@ -76,7 +61,7 @@ export type PromiseWithTimeoutArgs<T> = {
 export type SAS = SingleOrArray<string>;
 
 export type Transition = {
-  target: string;
+  target: string | FinalStateTarget;
   conditions?: SAS;
   actions?: SAS;
   description?: string;
@@ -101,23 +86,15 @@ export type AsyncState = _BaseState & {
   timeout: string;
 };
 
-export type FinalState = _BaseState & {
-  type: 'final';
-};
-
-export type State = SyncState | AsyncState | FinalState;
+export type State = SyncState | AsyncState;
 
 export type DefinitionFromState<
   TA = any,
   TC = any,
   S extends State = State,
 > =
-  | (
-      | ('sync' extends S['type'] ? SyncStateDefinition<TA, TC> : never)
-      | ('async' extends S['type'] ? AsyncStateDefinition<TA, TC> : never)
-      | ('final' extends S['type'] ? FinalStateDefinition<TA, TC> : never)
-    )
-  | USD;
+  | ('sync' extends S['type'] ? SyncStateDefinition<TA, TC> : never)
+  | ('async' extends S['type'] ? AsyncStateDefinition<TA, TC> : never);
 
 export type DFS<
   TA = any,
@@ -125,15 +102,22 @@ export type DFS<
   S extends State = State,
 > = DefinitionFromState<TA, TC, S>;
 
-export type Config<TA = any, TC = any, S extends State = State> = {
+export type Config<
+  TA = any,
+  TC = any,
+  S extends State = State,
+  D = any,
+> = {
   context: TC;
   initial: string;
   args?: TA;
   tsTypes?: {
     context?: TC;
     args?: TA;
+    data?: D;
     // states?:
   };
+  data?: StateFunction<TC, TA, D>;
   states: Record<string, S>;
 };
 
@@ -143,4 +127,29 @@ export type Options<TC = any, TA = any> = {
   promises?: Record<string, StateFunction<TC, TA, Promise<any>>>;
   timeouts?: Record<string, number>;
   async?: true | undefined;
+  overflow?: number;
 };
+
+export class FinalStateTarget {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  private constructor() {}
+
+  static #instance: FinalStateTarget;
+
+  // toString(): string {
+  //   return '$$final$$';
+  // }
+
+  static getInstance(): FinalStateTarget {
+    if (!FinalStateTarget.#instance) {
+      FinalStateTarget.#instance = new FinalStateTarget();
+    }
+    return FinalStateTarget.#instance;
+  }
+}
+
+export const FINAL_TARGET = FinalStateTarget.getInstance();
+
+export type UndefinyF<T, R> = T extends undefined
+  ? () => R
+  : (args: T) => R;

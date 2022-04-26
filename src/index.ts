@@ -1,11 +1,10 @@
 export * from './createMachine';
 export {
-  isSync,
-  isSyncDef,
   isAsync,
   isAsyncDef,
-  isFinal,
-  isFinalDef,
+  isFinalTarget,
+  isSync,
+  isSyncDef,
 } from './helpers';
 export * from './serve';
-export * from './types';
+export { AsyncState, FINAL_TARGET, Transition, Config, Options,StateFunction } from './types';

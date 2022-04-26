@@ -1,28 +1,25 @@
 import { Machine } from './machine';
-import { StateDefinition } from './types';
+import { StateDefinition, UndefinyF } from './types';
 
 type ReturnType<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
+  D = TC,
 > = 'async' extends S['type']
-  ? (args: TA) => Promise<TC>
-  : (args: TA) => TC;
+  ? UndefinyF<TA, Promise<D>>
+  : UndefinyF<TA, D>;
 
 export function serve<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
->(machine: Machine<TA, TC, S>): ReturnType<TA, TC, S> {
+  D = TC,
+>(machine: Machine<TA, TC, S, D>): ReturnType<TA, TC, S, D> {
   const _machine = machine.clone;
-  const checkAsync = _machine._states.some(
-    state => state.type === 'async',
-  );
-  return (checkAsync ? _machine.startAsync : _machine.start) as ReturnType<
-    TA,
-    TC,
-    S
-  >;
+  return (
+    _machine.containsAsyncStates ? _machine.startAsync : _machine.start
+  ) as ReturnType<TA, TC, S, D>;
 }
 
 // type ReturnType2<T extends Machine> =

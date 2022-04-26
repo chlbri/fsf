@@ -1,9 +1,10 @@
-# fstate
+# fsf
 
 <p align="center">
   
   <br />
-    <strong>Fstate for Server/Functions</strong>
+    <strong>Final State Functions</strong>
+    <p>Never use if again. Prototype, test, and code. RED-GREEN-BLUE</p>
   <br />
 
 </p>
@@ -13,27 +14,27 @@
 
 ## Features
 
-|                               | **'@bemedev/fstate'** |
-| ----------------------------- | :-------------------: |
-| Finite states                 |          ✅           |
-| Initial state                 |          ✅           |
-| Transitions (object)          |          ❌           |
-| Transitions (string target)   |          ✅           |
-| Delayed transitions           |          ❌           |
-| Eventless transitions         |          ✅           |
-| Nested states                 |          ❌           |
-| Parallel states               |          ❌           |
-| History states                |          ❌           |
-| Final states                  |          ❌           |
-| Context                       |          ✅           |
-| Entry actions                 |          ❌           |
-| Exit actions                  |          ❌           |
-| Transition actions            |          ✅           |
-| Parameterized actions         |          ❌           |
-| Transition guards             |          ✅           |
-| Parameterized guards          |          ❌           |
-| Spawned actors                |          ❌           |
-| Invoked actors(promises only) |          ✅           |
+|                               | **'@bemedev/fsf'** |
+| ----------------------------- | :----------------: |
+| Finite states                 |         ✅         |
+| Initial state                 |         ✅         |
+| Transitions (object)          |         ❌         |
+| Transitions (string target)   |         ✅         |
+| Delayed transitions           |         ❌         |
+| Eventless transitions         |         ✅         |
+| Nested states                 |         ❌         |
+| Parallel states               |         ❌         |
+| History states                |         ❌         |
+| Final states                  |         ❌         |
+| Context                       |         ✅         |
+| Entry actions                 |         ❌         |
+| Exit actions                  |         ❌         |
+| Transition actions            |         ✅         |
+| Parameterized actions         |         ❌         |
+| Transition guards             |         ✅         |
+| Parameterized guards          |         ❌         |
+| Spawned actors                |         ❌         |
+| Invoked actors(promises only) |         ✅         |
 
 <br/>
 <br/>
@@ -52,9 +53,9 @@ If you want to use statechart features such as nested states, parallel states, h
 <br/>
 
 ```bash
-npm i @bemedev/fstate //or
-yarn add @bemedev/fstate //or
-pnpm add @bemedev/fstate
+npm i @bemedev/fsf //or
+yarn add @bemedev/fsf //or
+pnpm add @bemedev/fsf
 ```
 
 ### Usage (machine)
@@ -66,7 +67,6 @@ import { createMachine, serve } from '@bemedev/fstate';
 const machine = createMachine(
   {
     tsTypes: {
-      args: {} as number,
       context: {} as { val: string },
     },
     context: { val: '' },
@@ -92,7 +92,6 @@ const machine = createMachine(
         onError: [],
         timeout: '0',
       },
-      finish: { type: 'final' },
     },
   },
   {
@@ -106,7 +105,6 @@ const machine = createMachine(
     },
   },
 );
-// => 'inactive'
 ```
 
 <br/>
@@ -117,12 +115,12 @@ const machine = createMachine(
 <br/>
 
 ```ts
-import { createMachine, interpret } from '@bemedev/fstate';
+import { createMachine, serve } from '@bemedev/fsf';
 const toggleMachine = createMachine({...});
 //Serve infer the return type (the context is the return type of the function)
 //Also it infers the fact that serve will be an async function or not
 //Here before the states contain an async one,
 //"service" will be an async function.
-const service = serve(machine); // (args: number)=>Promise<{ val: string }>
-(()=>await service(2))() // expected = { val: 'true' }
+const service = serve(machine); // Type: ()=>Promise<{ val: string }>
+(()=>await service())() // expected = { val: 'true' }
 ```

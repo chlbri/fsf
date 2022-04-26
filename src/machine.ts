@@ -1,87 +1,112 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { isAsyncDef, isSyncDef, promiseWithTimeout } from './helpers';
-import type { StateDefinition, USD } from './types';
+import {
+  identity,
+  isAsyncDef,
+  isFinalTarget,
+  isSyncDef,
+  promiseWithTimeout,
+} from './helpers';
+import { StateDefinition, StateFunction, UndefinyF } from './types';
 
-const unexpectedState: USD = {
-  type: 'unexpected',
-  value: 'fstate.unexpected',
+type MarchineArgs<
+  TA = any,
+  TC extends Record<string, unknown> = Record<string, unknown>,
+  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
+  D = any,
+> = {
+  _states: S[];
+  initial: string;
+  context: TC;
+  dataF?: StateFunction<TC, TA, D>;
+  overflow?: number;
+  test?: boolean;
 };
 
 export class Machine<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
+  D = any,
 > {
   #args!: TA;
-  readonly #containsAsyncStates: boolean;
+  readonly containsAsyncStates: boolean;
   readonly #initialContext: TC;
-  constructor(
-    public _states: (S | USD)[],
-    private initial: string,
-    private context: TC,
-    private overflow = 100,
-    public test = false,
-  ) {
+
+  // #region Props
+  _states: S[];
+  private initial: string;
+  private context: TC;
+  readonly dataF: StateFunction<TC, TA, D>;
+  private readonly overflow: number;
+  private test: boolean;
+  // #endregion
+
+  constructor({
+    _states,
+    initial,
+    context,
+    dataF = identity as any,
+    overflow = 100,
+    test = false,
+  }: MarchineArgs<TA, TC, S, D>) {
+    // #region Initilize props
+    this._states = _states;
+    this.initial = initial;
+    this.context = context;
+    this.dataF = dataF;
+    this.overflow = overflow;
+    this.test = test;
+    // #endregion
+
     this.#initialContext = context;
     this.#initializeStates();
-    this.#initializeTransitions();
-    this.#containsAsyncStates = _states.some(
+    // this.#initializeTransitions();
+    this.containsAsyncStates = _states.some(
       state => state.type === 'async',
     );
   }
 
+  private get props() {
+    return {
+      _states: this._states,
+      initial: this.initial,
+      context: this.context,
+      dataF: this.dataF,
+      overflow: this.overflow,
+      test: this.test,
+    };
+  }
+
+  cloneWithValue(props?: Partial<MarchineArgs<TA, TC, S, D>>) {
+    return new Machine({ ...this.props, ...props });
+  }
+
   get clone() {
-    return new Machine(
-      this._states,
-      this.initial,
-      this.#initialContext,
-      this.overflow,
-    );
+    return this.cloneWithValue();
   }
 
   get cloneTest() {
-    return new Machine(
-      this._states,
-      this.initial,
-      this.#initialContext,
-      this.overflow,
-      true,
-    );
+    return this.cloneWithValue({ test: true });
   }
 
   #initializeStates() {
     const __allStates = this._states;
     const initial = this.initial;
     if (__allStates.length < 1) throw 'No states';
-    if (!__allStates.some(value => value.type === 'final'))
-      throw 'No final states';
 
     const findInitial = __allStates.find(state => state.value === initial);
     if (!findInitial) throw 'No initial state';
-    if (findInitial.type === 'final') throw 'First state cannot be final';
 
     this.#currentState = findInitial;
-    this._states.push(unexpectedState);
 
     this.test && this.enteredStates.push(this.#currentState.value);
   }
 
-  #initializeTransitions() {
-    const __temp = this._states.map(state => {
-      if (isSyncDef(state)) {
-        state.transitions.push({
-          target: unexpectedState.value,
-          source: state.value,
-          actions: [],
-          conditions: [],
-        });
-      }
-      return state;
-    });
-    this._states = __temp;
-  }
-
   #hasNext = true;
+
+  get data(): D {
+    return this.dataF(this.context, this.#args);
+  }
 
   #setCurrentState(value: string) {
     const out = this._states.find(_state => _state.value === value);
@@ -101,6 +126,10 @@ export class Machine<
           .every(value => value === true);
         if (!cond) continue;
         transition.actions.forEach(action => action(this.context, args));
+        if (isFinalTarget(transition.target)) {
+          this.#hasNext = false;
+          return;
+        }
         this.#setCurrentState(transition.target);
         break;
       }
@@ -128,6 +157,10 @@ export class Machine<
             transition.actions.forEach(action => {
               action(this.context, args);
             });
+            if (isFinalTarget(transition.target)) {
+              this.#hasNext = false;
+              return;
+            }
             this.#setCurrentState(transition.target);
             break;
           }
@@ -142,6 +175,10 @@ export class Machine<
             transition.actions.forEach(action =>
               action(this.context, error),
             );
+            if (isFinalTarget(transition.target)) {
+              this.#hasNext = false;
+              return;
+            }
             this.#setCurrentState(transition.target);
             break;
           }
@@ -149,11 +186,13 @@ export class Machine<
     }
   }
 
-  readonly start = (args: TA) => {
-    if (this.#containsAsyncStates) throw 'async state exists';
+  readonly start = (args => {
+    if (this.containsAsyncStates) {
+      throw 'async state exists';
+    }
     let iterator = 0;
     this.#args = args;
-    while (this.#hasNext && this.#currentState.type !== 'final') {
+    while (this.#hasNext) {
       this.#hasNext = false;
       this.#nextSync();
       iterator++;
@@ -161,14 +200,17 @@ export class Machine<
         throw 'Overflow transitions';
       }
     }
-    return this.context;
-  };
+    return this.data;
+  }) as UndefinyF<TA, D>;
 
-  readonly startAsync = async (args: TA) => {
-    if (!this.test && !this.#containsAsyncStates) throw 'no async state';
+  readonly startAsync = (async args => {
+    const error = !this.test && !this.containsAsyncStates;
+    if (error) {
+      throw 'no async state';
+    }
     let iterator = 0;
     this.#args = args;
-    while (this.#hasNext && this.#currentState.type !== 'final') {
+    while (this.#hasNext) {
       this.#hasNext = false;
       this.#nextSync();
       await this.#nextAsync();
@@ -177,10 +219,10 @@ export class Machine<
         throw 'Overflow transitions';
       }
     }
-    return this.context;
-  };
+    return this.data;
+  }) as UndefinyF<TA, Promise<D>>;
 
-  #currentState!: S | USD;
+  #currentState!: S;
 
   get state() {
     return this.#currentState;

@@ -1,10 +1,13 @@
 import { nanoid } from 'nanoid';
 import type { Machine } from './machine';
 
-type Test<TA = any, TC = any> = { invite?: string; args: TA } & (
-  | { expected: TC; enteredStates?: (string | undefined)[] }
-  | { expected?: TC; enteredStates: (string | undefined)[] }
-);
+type Test<TA = any, TC = any> = {
+  invite?: string;
+} & (TA extends undefined ? { args?: never } : { args: TA }) &
+  (
+    | { expected: TC; enteredStates?: (string | undefined)[] }
+    | { expected?: TC; enteredStates: (string | undefined)[] }
+  );
 
 type Props<
   TA = any,
@@ -34,7 +37,7 @@ function testCase<
         'Result matches expected',
         async () => {
           const _machine = machine.cloneTest;
-          const received = await _machine.startAsync(args);
+          const received = await _machine.startAsync(args as TA);
           expect(received).toStrictEqual(expected);
         },
         timeout,
@@ -44,7 +47,7 @@ function testCase<
         'STATES match expecteds',
         async () => {
           const _machine = machine.cloneTest;
-          await _machine.startAsync(args);
+          await _machine.startAsync(args as TA);
           expect(_machine.enteredStates).toStrictEqual(enteredStates);
         },
         timeout,
