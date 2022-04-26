@@ -140,8 +140,11 @@ yarn.lock
 #vscode
 .vscode
 
-# Library
+# Gitpod
 .gitpod-config
+
+# Github
+.github
 
 #Apple
 **/.DS_Store
