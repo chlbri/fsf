@@ -191,7 +191,7 @@ export class Machine<
       throw 'async state exists';
     }
     let iterator = 0;
-    this.#args = args;
+    this.#args = (args ?? undefined) as TA;
     while (this.#hasNext) {
       this.#hasNext = false;
       this.#nextSync();
@@ -209,7 +209,7 @@ export class Machine<
       throw 'no async state';
     }
     let iterator = 0;
-    this.#args = args;
+    this.#args = (args ?? undefined) as TA;
     while (this.#hasNext) {
       this.#hasNext = false;
       this.#nextSync();
