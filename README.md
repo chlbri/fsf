@@ -63,7 +63,8 @@ pnpm add @bemedev/fsf
 <br/>
 
 ```ts
-import { createMachine, serve } from '@bemedev/fstate';
+import { createMachine, serve, FINAL_TARGET } from '@bemedev/fsf';
+
 const machine = createMachine(
   {
     tsTypes: {
@@ -85,7 +86,7 @@ const machine = createMachine(
         promise: 'prom',
         onDone: [
           {
-            target: 'finish',
+            target: FINAL_TARGET,
             actions: ['ok'],
           },
         ],
@@ -116,6 +117,7 @@ const machine = createMachine(
 
 ```ts
 import { createMachine, serve } from '@bemedev/fsf';
+
 const toggleMachine = createMachine({...});
 //Serve infer the return type (the context is the return type of the function)
 //Also it infers the fact that serve will be an async function or not
