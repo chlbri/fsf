@@ -148,7 +148,7 @@ export function promiseWithTimeout<T>({
   promise,
   failureMessage,
 }: PromiseWithTimeoutArgs<T>): () => Promise<Awaited<T>> {
-  let timeoutHandle: NodeJS.Timeout;
+  let timeoutHandle: any;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutHandle = setTimeout(
       () => reject(new Error(failureMessage)),
