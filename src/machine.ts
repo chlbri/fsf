@@ -77,9 +77,9 @@ export class Machine<
     };
   }
 
-  cloneWithValue(props?: Partial<MarchineArgs<TA, TC, S, D>>) {
-    return new Machine({ ...this.props, ...props });
-  }
+  readonly cloneWithValue = (
+    props?: Partial<MarchineArgs<TA, TC, S, D>>,
+  ) => new Machine({ ...this.props, ...props });
 
   get clone() {
     return this.cloneWithValue();
@@ -89,7 +89,7 @@ export class Machine<
     return this.cloneWithValue({ test: true });
   }
 
-  #initializeStates() {
+  #initializeStates = () => {
     const __allStates = this._states;
     const initial = this.initial;
     if (__allStates.length < 1) throw 'No states';
@@ -100,7 +100,7 @@ export class Machine<
     this.#currentState = findInitial;
 
     this.test && this.enteredStates.push(this.#currentState.value);
-  }
+  };
 
   #hasNext = true;
 
@@ -108,13 +108,13 @@ export class Machine<
     return this.dataF(this.context, this.#args);
   }
 
-  #setCurrentState(value: string) {
+  #setCurrentState = (value: string) => {
     const out = this._states.find(_state => _state.value === value);
     this.#currentState = out!;
     this.test && this.enteredStates.push(out!.value);
-  }
+  };
 
-  #nextSync() {
+  #nextSync = () => {
     const current = { ...this.#currentState };
     const args = { ...this.#args };
     if (isSyncDef(current)) {
@@ -134,9 +134,9 @@ export class Machine<
         break;
       }
     }
-  }
+  };
 
-  async #nextAsync() {
+  #nextAsync = async () => {
     const current = this.#currentState;
     const args = { ...this.#args };
     if (isAsyncDef(current)) {
@@ -184,7 +184,7 @@ export class Machine<
           }
         });
     }
-  }
+  };
 
   readonly start = (args => {
     if (this.containsAsyncStates) {
@@ -232,7 +232,7 @@ export class Machine<
     return this.context;
   }
 
-  enteredStates: string[] = [];
+  readonly enteredStates: string[] = [];
 }
 
 // export type GetTA<T extends Machine> = T extends Machine<infer U>
