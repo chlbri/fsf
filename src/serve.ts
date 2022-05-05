@@ -16,9 +16,9 @@ export function serve<
   S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
   D = TC,
 >(machine: Machine<TA, TC, S, D>): ReturnType<TA, TC, S, D> {
-  const _machine = machine.clone;
-  const async = _machine.containsAsyncStates;
   return ((args: TA) => {
+    const _machine = machine.clone;
+    const async = _machine.containsAsyncStates;
     return async ? _machine.startAsync(args) : _machine.start(args);
   }) as ReturnType<TA, TC, S, D>;
 }
