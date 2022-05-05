@@ -23,7 +23,8 @@
   "scripts": {
     "postinstall": "pnpm test",
     "test": "jest",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@bemedev/npm-publish": "^0.0.1-pnpm2",
@@ -37,12 +38,14 @@
     "edit-json-file": "^1.7.0",
     "eslint": "^8.8.0",
     "faker": "^6.6.6",
+    "husky": "^7.0.0",
     "immer": "^9.0.12",
     "jest": "^27.5.0",
     "jest-cucumber": "^3.0.1",
     "jest-extended": "^2.0.0",
     "nanoid": "^3.2.0",
     "prettier": "^2.5.1",
+    "pretty-quick": "^3.1.3",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
     "ts-jest": "^27.1.3",
