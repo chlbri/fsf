@@ -58,7 +58,7 @@ export class Machine<
     this.test = test;
     // #endregion
 
-    this.#initialContext = context;
+    this.#initialContext = { ...context };
     this.#initializeStates();
     // this.#initializeTransitions();
     this.containsAsyncStates = _states.some(
@@ -82,12 +82,12 @@ export class Machine<
   ) => new Machine({ ...this.props, ...props });
 
   get clone() {
-    const context = this.#initialContext;
+    const context = { ...this.#initialContext };
     return this.cloneWithValues({ context });
   }
 
   get cloneTest() {
-    const context = this.#initialContext;
+    const context = { ...this.#initialContext };
     const test = true;
     return this.cloneWithValues({ test, context });
   }
@@ -119,16 +119,18 @@ export class Machine<
 
   #nextSync = () => {
     const current = { ...this.#currentState };
-    const args = { ...this.#args };
+    const args = this.#clonedArgs;
     if (isSyncDef(current)) {
       this.#hasNext = true;
       const transitions = current.transitions;
       for (const transition of transitions) {
         const cond = transition.conditions
-          .map(condition => condition({ ...this.context }, args))
+          .map(condition => condition({ ...this.context }, args as TA))
           .every(value => value === true);
         if (!cond) continue;
-        transition.actions.forEach(action => action(this.context, args));
+        transition.actions.forEach(action =>
+          action(this.context, args as TA),
+        );
         if (isFinalTarget(transition.target)) {
           this.#hasNext = false;
           return;
@@ -139,14 +141,25 @@ export class Machine<
     }
   };
 
+  get #clonedArgs() {
+    if (this.#args instanceof Array) {
+      return [...this.#args];
+    }
+    if (typeof this.#args === 'object') {
+      return { ...this.#args };
+    }
+    return this.#args;
+  }
+
   #nextAsync = async () => {
     const current = this.#currentState;
-    const args = { ...this.#args };
+    const args = this.#clonedArgs;
+
     if (isAsyncDef(current)) {
       this.#hasNext = true;
       const src = promiseWithTimeout({
         timeoutMs: current.timeout,
-        promise: () => current.promise({ ...this.context }, args),
+        promise: () => current.promise({ ...this.context }, args as TA),
       });
       await src()
         .then(data => {
@@ -194,7 +207,8 @@ export class Machine<
       throw 'async state exists';
     }
     let iterator = 0;
-    this.#args = (args ?? undefined) as TA;
+    this.#args = args as TA;
+
     while (this.#hasNext) {
       this.#hasNext = false;
       this.#nextSync();
