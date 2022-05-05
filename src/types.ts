@@ -1,3 +1,6 @@
+import { FINAL_TARGET } from './constants';
+import type { MachineFunction } from './machineFunction';
+
 /* eslint-disable @typescript-eslint/ban-types */
 export type StateFunction<TC = any, TA = any, R = any> = (
   context: TC,
@@ -7,7 +10,7 @@ export type StateFunction<TC = any, TA = any, R = any> = (
 export type SingleOrArray<T> = T | T[];
 
 export type TransitionDefinition<TC = any, TA = any> = {
-  target: string | FinalStateTarget;
+  target: string | FST;
   source: string;
   actions: StateFunction<TC, TA, void>[];
   conditions: StateFunction<TC, TA, boolean>[];
@@ -41,9 +44,9 @@ export type AsyncStateDefinition<TA = any, TC = any> = BaseStateDefinition<
   TA,
   'async'
 > & {
-  promise: StateFunction<TC, TA, Promise<any>>;
-  onDone: TransitionDefinition<TC, any>[];
-  onError: TransitionDefinition<TC, any>[];
+  promise: StateFunction<TC, TA, Promise<void>>;
+  onDone: TransitionDefinition<TC, TA>[];
+  onError: TransitionDefinition<TC, TA>[];
   timeout: number;
   finally?: (context?: TC) => void;
 };
@@ -52,16 +55,16 @@ export type StateDefinition<TA = any, TC = any> =
   | SyncStateDefinition<TA, TC>
   | AsyncStateDefinition<TA, TC>;
 
-export type PromiseWithTimeoutArgs<T> = {
+export type PromiseWithTimeout = {
   timeoutMs: number;
-  promise: () => Promise<T>;
+  promise: () => Promise<void>;
   failureMessage?: string;
 };
 
 export type SAS = SingleOrArray<string>;
 
 export type Transition = {
-  target: string | FinalStateTarget;
+  target: string | FST;
   conditions?: SAS;
   actions?: SAS;
   description?: string;
@@ -102,20 +105,14 @@ export type DFS<
   S extends State = State,
 > = DefinitionFromState<TA, TC, S>;
 
-export type Config<
-  TA = any,
-  TC = any,
-  S extends State = State,
-  D = any,
-> = {
+export type Config<TA = any, TC = any, S extends State = State, D = TC> = {
   context: TC;
   initial: string;
   args?: TA;
-  tsTypes?: {
+  schema?: {
     context?: TC;
     args?: TA;
     data?: D;
-    // states?:
   };
   data?: StateFunction<TC, TA, D>;
   states: Record<string, S>;
@@ -130,26 +127,21 @@ export type Options<TC = any, TA = any> = {
   overflow?: number;
 };
 
-export class FinalStateTarget {
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  private constructor() {}
+export type FST = typeof FINAL_TARGET;
 
-  static #instance: FinalStateTarget;
-
-  // toString(): string {
-  //   return '$$final$$';
-  // }
-
-  static getInstance(): FinalStateTarget {
-    if (!FinalStateTarget.#instance) {
-      FinalStateTarget.#instance = new FinalStateTarget();
-    }
-    return FinalStateTarget.#instance;
-  }
-}
-
-export const FINAL_TARGET = FinalStateTarget.getInstance();
-
-export type UndefinyF<T, R> = T extends undefined
+export type UndefinyFunction<T, R> = T extends undefined
   ? () => R
   : (args: T) => R;
+
+export type GetTA<T extends MachineFunction> = T extends MachineFunction<
+  infer U
+>
+  ? U
+  : never;
+
+export type GetTC<T extends MachineFunction> = T extends MachineFunction<
+  any,
+  infer U
+>
+  ? U
+  : never;

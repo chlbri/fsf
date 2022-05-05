@@ -1,9 +1,9 @@
-import {
+import { FINAL_TARGET } from './constants';
+import type {
   AsyncState,
   AsyncStateDefinition,
-  FinalStateTarget,
-  FINAL_TARGET,
-  PromiseWithTimeoutArgs,
+  FST,
+  PromiseWithTimeout,
   SAS,
   SingleOrArray,
   State,
@@ -15,20 +15,23 @@ import {
   TransitionDefinition,
 } from './types';
 
+// #region Usual Functions
+export const asyncVoid = async () => {
+  return;
+};
+
+export const voidNothing = () => {
+  return;
+};
+
 export const returnTrue = () => true;
-
-export function unimplementedAction<T extends string>(action: T) {
-  console.log(`${action} (Not implemented)`);
-}
-
-export const voidNothing = () => void undefined;
 export const return0 = () => 0;
-export const asyncVoidNothing = async () => void undefined;
 export const asyncReturn0 = async () => 0;
+export const asyncReturnTrue = async () => true;
+export const identity = <T>(value: T) => value;
+// #endregion
 
-export const identity = <T>(x: T) => x;
-
-export function extractConditions<TC = any, TA = any>(
+function extractConditions<TC = any, TA = any>(
   strings?: SAS,
   conditions?: Record<string, StateFunction<TC, TA, boolean>>,
 ) {
@@ -65,7 +68,7 @@ export function extractActions<TC = any, TA = any>(
 }
 
 export function extractTransitionFunction<TC = any, TA = any>(
-  strings: string[],
+  states: string[],
   source: string,
   options?: {
     actions?: Record<string, StateFunction<TC, TA, void>>;
@@ -74,15 +77,15 @@ export function extractTransitionFunction<TC = any, TA = any>(
 ): (value: Transition) => TransitionDefinition<TC, TA> {
   return transition => {
     const target = transition.target;
-    const someStateNotExists =
-      !(target === FINAL_TARGET) && !strings.includes(target as string);
+    const stateNotExists =
+      !isFinalTarget(target) && !states.includes(target as string);
 
-    if (someStateNotExists) {
+    if (stateNotExists) {
       throw `No state for "${target}"`;
     }
 
     if (source === target) {
-      throw 'Cannot transit to himself';
+      throw `Cannot transit to himself : ${source}`;
     }
     const description = transition.description;
 
@@ -104,7 +107,7 @@ export function extractTransitionFunction<TC = any, TA = any>(
 }
 
 export function extractTransitions<TC = any, TA = any>(
-  strings: string[],
+  states: string[],
   source: string,
   transitions?: SingleOrArray<Transition>,
   options?: {
@@ -118,12 +121,12 @@ export function extractTransitions<TC = any, TA = any>(
   if (Array.isArray(transitions)) {
     functions.push(
       ...transitions.map(
-        extractTransitionFunction(strings, source, options),
+        extractTransitionFunction(states, source, options),
       ),
     );
   } else {
     functions.push(
-      extractTransitionFunction(strings, source, options)(transitions),
+      extractTransitionFunction(states, source, options)(transitions),
     );
   }
   return functions;
@@ -137,18 +140,16 @@ export function isAsync(state: State): state is AsyncState {
   return state.type === 'async';
 }
 
-export function isFinalTarget(
-  value: string | FinalStateTarget,
-): value is FinalStateTarget {
+export function isFinalTarget(value: unknown): value is FST {
   return value === FINAL_TARGET;
 }
 
-export function promiseWithTimeout<T>({
+export function promiseWithTimeout({
   timeoutMs,
   promise,
   failureMessage,
-}: PromiseWithTimeoutArgs<T>): () => Promise<Awaited<T>> {
-  let timeoutHandle: any;
+}: PromiseWithTimeout): () => Promise<void> {
+  let timeoutHandle: ReturnType<typeof setTimeout>;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutHandle = setTimeout(
       () => reject(new Error(failureMessage)),

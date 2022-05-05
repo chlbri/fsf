@@ -1,10 +1,10 @@
 import { nanoid } from 'nanoid';
-import type { Machine } from './machine';
-import { StateDefinition } from './types';
+import type { MachineFunction } from './machineFunction';
+import type { StateDefinition } from './types';
 
 type Test<TA = any, TC = any> = {
   invite?: string;
-} & (TA extends undefined ? { args?: never } : { args: TA }) &
+} & (TA extends undefined ? { args?: undefined } : { args: TA }) &
   (
     | { expected: TC; enteredStates?: (string | undefined)[] }
     | { expected?: TC; enteredStates: (string | undefined)[] }
@@ -16,14 +16,14 @@ type Props<
   S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
   D = any,
 > = {
-  machine: Machine<TA, TC, S, D>;
+  machine: MachineFunction<TA, TC, S, D>;
   tests: Test<TA, TC>[];
   // invite?: string;
   timeout?: number;
 };
 
-function constructInvite(invite = nanoid()) {
-  return `${invite} ==>`;
+function constructInvite(invite = nanoid(7)) {
+  return `${invite} =>`;
 }
 
 function testCase<
@@ -32,16 +32,17 @@ function testCase<
   S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
   D = any,
 >(
-  machine: Machine<TA, TC, S, D>,
+  machine: MachineFunction<TA, TC, S, D>,
   { invite, args, expected, enteredStates }: Test<TA, TC>,
-  timeout: number,
+  timeout = 3500,
+  tester = describe,
 ) {
-  describe(constructInvite(invite), () => {
+  tester(constructInvite(invite), () => {
     beforeAll(() => {
       machine.startAsync(args as TA);
     });
     !!expected &&
-      test(
+      it(
         'Result matches expected',
         async () => {
           expect(machine.value).toStrictEqual(expected);
@@ -49,7 +50,7 @@ function testCase<
         timeout,
       );
     !!enteredStates &&
-      test(
+      it(
         'STATES match expecteds',
         async () => {
           expect(machine.enteredStates).toStrictEqual(enteredStates);
@@ -59,17 +60,47 @@ function testCase<
   });
 }
 
-export function testMachine<
+export function test<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
   D = any,
->({ machine, tests, timeout = 3500 }: Props<TA, TC, S, D>) {
-  // for (const test of tests) {
-  //   testCase(machine, test, timeout);
-  // }
-
+>({ machine, tests, timeout }: Props<TA, TC, S, D>) {
   tests.forEach(test => {
     testCase(machine.cloneTest, test, timeout);
   });
 }
+
+test.skip = <
+  TA = any,
+  TC extends Record<string, unknown> = Record<string, unknown>,
+  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
+  D = any,
+>({
+  machine,
+  tests,
+  timeout,
+}: Props<TA, TC, S, D>) => {
+  tests.forEach(test => {
+    testCase(machine.cloneTest, test, timeout, describe.skip);
+  });
+};
+
+test.only = <
+  TA = any,
+  TC extends Record<string, unknown> = Record<string, unknown>,
+  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
+  D = any,
+>({
+  machine,
+  tests,
+  timeout,
+}: Props<TA, TC, S, D>) => {
+  tests.forEach(test => {
+    testCase(machine.cloneTest, test, timeout, describe.only);
+  });
+};
+
+test.todo = (todo: string) => {
+  it.todo(todo);
+};
