@@ -60,7 +60,7 @@ function testCase<
   });
 }
 
-export function test<
+export function ttest<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
@@ -71,7 +71,7 @@ export function test<
   });
 }
 
-test.skip = <
+ttest.skip = <
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
@@ -86,7 +86,7 @@ test.skip = <
   });
 };
 
-test.only = <
+ttest.only = <
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
@@ -101,6 +101,6 @@ test.only = <
   });
 };
 
-test.todo = (todo: string) => {
+ttest.todo = (todo: string) => {
   it.todo(todo);
 };
