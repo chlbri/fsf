@@ -17,9 +17,10 @@ export function serve<
   D = TC,
 >(machine: Machine<TA, TC, S, D>): ReturnType<TA, TC, S, D> {
   const _machine = machine.clone;
-  return (
-    _machine.containsAsyncStates ? _machine.startAsync : _machine.start
-  ) as ReturnType<TA, TC, S, D>;
+  const async = _machine.containsAsyncStates;
+  return ((args: TA) => {
+    return async ? _machine.startAsync(args) : _machine.start(args);
+  }) as ReturnType<TA, TC, S, D>;
 }
 
 // type ReturnType2<T extends Machine> =
