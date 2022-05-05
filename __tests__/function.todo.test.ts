@@ -1,3 +1,3 @@
-import { test } from '../src/testFunction';
+import { ttest } from '../src/testFunction';
 
-test.todo('Build a beautifull machine');
+ttest.todo('Build a beautifull machine');

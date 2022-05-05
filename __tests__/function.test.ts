@@ -1,6 +1,6 @@
 import { FINAL_TARGET } from '../src/constants';
 import { createFunction } from '../src/createFunction';
-import { test } from '../src/testFunction';
+import { ttest } from '../src/testFunction';
 
 describe('machine1', () => {
   const machine1 = createFunction(
@@ -45,7 +45,7 @@ describe('machine1', () => {
     },
   );
 
-  test({
+  ttest({
     machine: machine1,
     tests: [
       {
@@ -101,7 +101,7 @@ describe('machine2', () => {
     },
   );
 
-  test({
+  ttest({
     machine: machine2,
     tests: [
       {
