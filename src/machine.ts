@@ -77,16 +77,19 @@ export class Machine<
     };
   }
 
-  readonly cloneWithValue = (
+  readonly cloneWithValues = (
     props?: Partial<MarchineArgs<TA, TC, S, D>>,
   ) => new Machine({ ...this.props, ...props });
 
   get clone() {
-    return this.cloneWithValue();
+    const context = this.#initialContext;
+    return this.cloneWithValues({ context });
   }
 
   get cloneTest() {
-    return this.cloneWithValue({ test: true });
+    const context = this.#initialContext;
+    const test = true;
+    return this.cloneWithValues({ test, context });
   }
 
   #initializeStates = () => {

@@ -1,6 +1,6 @@
 {
   "name": "@bemedev/fsf",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "https://github.com/chlbri/fstate.git",
   "author": "chlbri <bri_lvi@icloud.com>",
   "main": "dist/index.js",
