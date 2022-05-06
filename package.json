@@ -24,7 +24,8 @@
     "postinstall": "pnpm test",
     "test": "jest",
     "tsc": "tsc",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "p-q": "pretty-quick --staged --pattern \"**/*.*(ts|tsx)\""
   },
   "devDependencies": {
     "@bemedev/npm-publish": "^0.0.1-pnpm2",
