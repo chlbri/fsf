@@ -119,7 +119,7 @@ export type Config<TA = any, TC = any, S extends State = State, D = TC> = {
 };
 
 export type Options<TC = any, TA = any> = {
-  actions?: Record<string, StateFunction<TC, any, any>>;
+  actions?: Record<string, StateFunction<TC, TA, any>>;
   conditions?: Record<string, StateFunction<TC, TA, boolean>>;
   promises?: Record<string, StateFunction<TC, TA, Promise<any>>>;
   timeouts?: Record<string, number>;
