@@ -82,11 +82,15 @@ export class MachineFunction<
   ) => new MachineFunction({ ...this.#props, ...props });
 
   get clone() {
+    //TODO: Addd deepclone
+
     const context = { ...this.#initialContext };
     return this.cloneWithValues({ context });
   }
 
   get cloneTest() {
+    //TODO: Addd deepclone
+
     const context = { ...this.#initialContext };
     const test = true;
     return this.cloneWithValues({ test, context });
@@ -143,6 +147,7 @@ export class MachineFunction<
   };
 
   get #clonedArgs() {
+    //TODO: Addd deepclone
     if (this.#args instanceof Array) {
       return [...this.#args];
     }
