@@ -1,3 +1,4 @@
+import cloneDeep from 'lodash.clonedeep';
 import {
   identity,
   isAsyncDef,
@@ -61,7 +62,7 @@ export class MachineFunction<
     this.#test = test;
     // #endregion
 
-    this.#initialContext = { ...context };
+    this.#initialContext = cloneDeep(context);
     this.#initializeStates();
     this.async = _states.some(state => state.type === 'async');
   }
@@ -82,16 +83,14 @@ export class MachineFunction<
   ) => new MachineFunction({ ...this.#props, ...props });
 
   get clone() {
-    //TODO: Addd deepclone
-
-    const context = { ...this.#initialContext };
+    const context = cloneDeep(this.#initialContext);
     return this.cloneWithValues({ context });
   }
 
   get cloneTest() {
     //TODO: Addd deepclone
 
-    const context = { ...this.#initialContext };
+    const context = cloneDeep(this.#initialContext);
     const test = true;
     return this.cloneWithValues({ test, context });
   }

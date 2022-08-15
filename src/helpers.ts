@@ -175,3 +175,7 @@ export function isAsyncDef<TA = any, TC = any>(
 ): state is AsyncStateDefinition<TA, TC> {
   return state.type === 'async';
 }
+
+export function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj)) as T;
+}
