@@ -1,5 +1,5 @@
 {
-  "include": ["src"],
+  "include": ["src/**/*.ts"],
   // "files": ["globals.d.ts"],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
@@ -69,7 +69,9 @@
     /* Advanced Options */
     "skipLibCheck": true /* Skip type checking of declaration files. */,
     "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": false /* Disallow inconsistently-cased references to the same file. */
+    "forceConsistentCasingInFileNames": false /* Disallow inconsistently-cased references to the same file. */,
+    "baseUrl": ".",
+    "types": ["vitest/globals"]
   },
   "exclude": [
     "node_modules",

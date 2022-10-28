@@ -1,6 +1,6 @@
-import { FINAL_TARGET } from '../src/constants';
-import { createFunction } from '../src/createFunction';
-import { ttest } from '../src/testFunction';
+import { FINAL_TARGET } from './constants';
+import { createFunction } from './createFunction';
+import { ttest } from './testFunction';
 
 describe('machine1', () => {
   const machine1 = createFunction(
