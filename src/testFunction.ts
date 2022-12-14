@@ -35,11 +35,11 @@ function testCase<
   machine: MachineFunction<TA, TC, S, D>,
   { invite, args, expected, enteredStates }: Test<TA, TC>,
   timeout = 3500,
-  tester = describe,
+  tester: any = describe,
 ) {
   tester(constructInvite(invite), () => {
     beforeAll(() => {
-      machine.startAsync(args as TA);
+      machine.start(args as TA);
     });
     !!expected &&
       it(
