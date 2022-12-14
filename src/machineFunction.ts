@@ -1,11 +1,5 @@
 import cloneDeep from 'lodash.clonedeep';
-import {
-  identity,
-  isAsyncDef,
-  isFinalTarget,
-  isSyncDef,
-  promiseWithTimeout,
-} from './helpers';
+import { identity, isFinalTarget } from './helpers';
 import type {
   StateDefinition,
   StateFunction,
@@ -33,7 +27,6 @@ export class MachineFunction<
   D = any,
 > {
   #args!: TA;
-  readonly async: boolean;
   readonly #initialContext: TC;
 
   // #region Props
@@ -64,7 +57,6 @@ export class MachineFunction<
 
     this.#initialContext = cloneDeep(context);
     this.#initializeStates();
-    this.async = _states.some(state => state.type === 'async');
   }
 
   get #props() {
@@ -124,24 +116,22 @@ export class MachineFunction<
   #nextSync = () => {
     const current = { ...this.#currentState };
     const args = this.#clonedArgs;
-    if (isSyncDef(current)) {
-      this.#hasNext = true;
-      const transitions = current.transitions;
-      for (const transition of transitions) {
-        const cond = transition.conditions
-          .map(condition => condition({ ...this.#context }, args as TA))
-          .every(value => value === true);
-        if (!cond) continue;
-        transition.actions.forEach(action =>
-          action(this.#context, args as TA),
-        );
-        if (isFinalTarget(transition.target)) {
-          this.#hasNext = false;
-          return;
-        }
-        this.#setCurrentState(transition.target);
-        break;
+    this.#hasNext = true;
+    const transitions = current.transitions;
+    for (const transition of transitions) {
+      const cond = transition.conditions
+        .map(condition => condition({ ...this.#context }, args as TA))
+        .every(value => value === true);
+      if (!cond) continue;
+      transition.actions.forEach(action =>
+        action(this.#context, args as TA),
+      );
+      if (isFinalTarget(transition.target)) {
+        this.#hasNext = false;
+        return;
       }
+      this.#setCurrentState(transition.target);
+      break;
     }
   };
 
@@ -156,65 +146,7 @@ export class MachineFunction<
     return this.#args;
   }
 
-  #nextAsync = async () => {
-    const current = this.#currentState;
-    const args = this.#clonedArgs;
-
-    if (isAsyncDef(current)) {
-      this.#hasNext = true;
-      const src = promiseWithTimeout({
-        timeoutMs: current.timeout,
-        promise: () => current.promise({ ...this.#context }, args as TA),
-      });
-      await src()
-        .then(() => {
-          const transitions = current.onDone;
-          for (const transition of transitions) {
-            const cond = transition.conditions
-              .map(condition =>
-                condition({ ...this.#context }, args as TA),
-              )
-              .every(value => value === true);
-
-            if (!cond) continue;
-            transition.actions.forEach(action => {
-              action(this.#context, args as TA);
-            });
-            if (isFinalTarget(transition.target)) {
-              this.#hasNext = false;
-              return;
-            }
-            this.#setCurrentState(transition.target);
-            break;
-          }
-        })
-        .catch(() => {
-          const transitions = current.onError;
-          for (const transition of transitions) {
-            const cond = transition.conditions
-              .map(condition =>
-                condition({ ...this.#context }, args as TA),
-              )
-              .every(value => value === true);
-            if (!cond) continue;
-            transition.actions.forEach(action =>
-              action(this.#context, args as TA),
-            );
-            if (isFinalTarget(transition.target)) {
-              this.#hasNext = false;
-              return;
-            }
-            this.#setCurrentState(transition.target);
-            break;
-          }
-        });
-    }
-  };
-
   readonly start = (args => {
-    if (this.async) {
-      throw 'async state exists';
-    }
     let iterator = 0;
     this.#args = args as TA;
 
@@ -228,25 +160,6 @@ export class MachineFunction<
     }
     return this.data;
   }) as UndefinyFunction<TA, D>;
-
-  readonly startAsync = (async args => {
-    const error = !this.#test && !this.async;
-    if (error) {
-      throw 'no async state';
-    }
-    let iterator = 0;
-    this.#args = (args ?? undefined) as TA;
-    while (this.#hasNext) {
-      this.#hasNext = false;
-      this.#nextSync();
-      await this.#nextAsync();
-      iterator++;
-      if (iterator >= this.#overflow) {
-        throw 'Overflow transitions';
-      }
-    }
-    return this.data;
-  }) as UndefinyFunction<TA, Promise<D>>;
 
   #currentState!: S;
 

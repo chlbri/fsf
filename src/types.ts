@@ -17,43 +17,19 @@ export type TransitionDefinition<TC = any, TA = any> = {
   description?: string;
 };
 
-export type StateType = 'sync' | 'async';
-
-export type BaseStateDefinition<
-  TA = any,
-  TC = any,
-  T extends StateType = StateType,
-> = {
+export type BaseStateDefinition<TA = any, TC = any> = {
   value: string;
   matches: <T extends string>(value: T) => boolean;
   entry: StateFunction<TC, TA, void>[];
   exit: StateFunction<TC, TA, void>[];
-  type: T;
 };
 
-export type SyncStateDefinition<TA = any, TC = any> = BaseStateDefinition<
+export type StateDefinition<TA = any, TC = any> = BaseStateDefinition<
   TA,
-  TC,
-  'sync'
+  TC
 > & {
   transitions: TransitionDefinition<TC, TA>[];
 };
-
-export type AsyncStateDefinition<TA = any, TC = any> = BaseStateDefinition<
-  TC,
-  TA,
-  'async'
-> & {
-  promise: StateFunction<TC, TA, Promise<void>>;
-  onDone: TransitionDefinition<TC, TA>[];
-  onError: TransitionDefinition<TC, TA>[];
-  timeout: number;
-  finally?: (context?: TC) => void;
-};
-
-export type StateDefinition<TA = any, TC = any> =
-  | SyncStateDefinition<TA, TC>
-  | AsyncStateDefinition<TA, TC>;
 
 export type PromiseWithTimeout = {
   timeoutMs: number;
@@ -70,42 +46,14 @@ export type Transition = {
   description?: string;
 };
 
-type _BaseState = {
+export type State = {
   entry?: SAS;
   exit?: SAS;
   description?: string;
-};
-
-export type SyncState = _BaseState & {
-  type: 'sync';
   transitions: SingleOrArray<Transition>;
 };
 
-export type AsyncState = _BaseState & {
-  type: 'async';
-  promise: string;
-  onDone: Transition[];
-  onError: Transition[];
-  timeout: string;
-};
-
-export type State = SyncState | AsyncState;
-
-export type DefinitionFromState<
-  TA = any,
-  TC = any,
-  S extends State = State,
-> =
-  | ('sync' extends S['type'] ? SyncStateDefinition<TA, TC> : never)
-  | ('async' extends S['type'] ? AsyncStateDefinition<TA, TC> : never);
-
-export type DFS<
-  TA = any,
-  TC = any,
-  S extends State = State,
-> = DefinitionFromState<TA, TC, S>;
-
-export type Config<TA = any, TC = any, S extends State = State, D = TC> = {
+export type Config<TA = any, TC = any, D = TC> = {
   context: TC;
   initial: string;
   args?: TA;
@@ -115,7 +63,7 @@ export type Config<TA = any, TC = any, S extends State = State, D = TC> = {
     data?: D;
   };
   data?: StateFunction<TC, TA, D>;
-  states: Record<string, S>;
+  states: Record<string, State>;
 };
 
 export type Options<TC = any, TA = any> = {
@@ -123,7 +71,6 @@ export type Options<TC = any, TA = any> = {
   conditions?: Record<string, StateFunction<TC, TA, boolean>>;
   promises?: Record<string, StateFunction<TC, TA, Promise<any>>>;
   timeouts?: Record<string, number>;
-  async?: true | undefined;
   overflow?: number;
 };
 

@@ -1,26 +1,12 @@
-import {
-  asyncVoid,
-  extractActions,
-  extractTransitions,
-  isAsync,
-  isSync,
-} from './helpers';
+import { extractActions, extractTransitions } from './helpers';
 import { MachineFunction } from './machineFunction';
-import type {
-  Config,
-  DFS,
-  Options,
-  State,
-  StateDefinition,
-  TransitionDefinition,
-} from './types';
+import type { Config, Options, StateDefinition } from './types';
 
 export function createFunction<
   TA = undefined,
   TC extends Record<string, unknown> = Record<string, unknown>,
-  S extends State = State,
   D = TC,
->(config: Config<TA, TC, S, D>, options?: Options<TC, TA>) {
+>(config: Config<TA, TC, D>, options?: Options<TC, TA>) {
   // #region Props
   const context = config.context;
   const initial = config.initial;
@@ -35,68 +21,27 @@ export function createFunction<
     const entry = extractActions(state.entry);
     const exit = extractActions(state.exit);
 
-    if (isSync(state)) {
-      states.push({
-        type: state.type,
-        value,
-        entry,
-        exit,
-        matches,
-        transitions: extractTransitions(
-          stringStates,
-          source,
-          state.transitions,
-          options,
-        ),
-      });
-      continue;
-    }
-
-    if (isAsync(state)) {
-      const promise = options?.promises?.[state.promise] ?? asyncVoid;
-
-      // #region Build onDone
-      const onDone: TransitionDefinition<TC, any>[] = extractTransitions(
+    states.push({
+      value,
+      entry,
+      exit,
+      matches,
+      transitions: extractTransitions(
         stringStates,
         source,
-        state.onDone,
+        state.transitions,
         options,
-      );
-      // #endregion
-
-      // #region Build onErrror
-      const onError: TransitionDefinition<TC, any>[] = extractTransitions(
-        stringStates,
-        source,
-        state.onError,
-        options,
-      );
-      // #endregion
-
-      const timeout = options?.timeouts?.[state.timeout] ?? 400;
-
-      states.push({
-        type: state.type,
-        value,
-        entry,
-        exit,
-        matches,
-        promise,
-        onDone,
-        onError,
-        timeout,
-      });
-      continue;
-    }
+      ),
+    });
   }
 
   // #region Props Helpers
   const dataF = config.data;
   const overflow = options?.overflow;
-  const _states = states as DFS<TA, TC, S>[];
+  const _states = states as StateDefinition<TA, TC>[];
   // #endregion
 
-  return new MachineFunction<TA, TC, DFS<TA, TC, S>, D>({
+  return new MachineFunction<TA, TC, StateDefinition<TA, TC>, D>({
     _states,
     context,
     dataF,

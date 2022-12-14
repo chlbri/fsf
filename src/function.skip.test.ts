@@ -1,66 +1,7 @@
+import { describe } from 'vitest';
 import { FINAL_TARGET } from './constants';
 import { createFunction } from './createFunction';
 import { ttest } from './testFunction';
-
-describe('machine1', () => {
-  const machine1 = createFunction(
-    {
-      schema: {
-        context: {} as { val: string },
-      },
-      context: { val: '' },
-      initial: 'idle',
-      states: {
-        idle: {
-          type: 'sync',
-          transitions: [
-            {
-              target: 'prom',
-            },
-          ],
-        },
-        prom: {
-          type: 'async',
-          promise: 'prom',
-          onDone: [
-            {
-              target: FINAL_TARGET,
-              actions: ['ok'],
-            },
-          ],
-          onError: [],
-          timeout: '0',
-        },
-      },
-    },
-    {
-      promises: {
-        prom: async () => true,
-      },
-      actions: {
-        ok: ctx => {
-          ctx.val = 'true';
-        },
-      },
-    },
-  );
-
-  ttest.skip({
-    machine: machine1,
-    tests: [
-      {
-        enteredStates: ['idle', 'prom'],
-      },
-      {
-        expected: { val: 'true' },
-      },
-      {
-        expected: { val: 'true' },
-        enteredStates: ['idle', 'prom'],
-      },
-    ],
-  });
-});
 
 describe('machine2', () => {
   const machine2 = createFunction(
@@ -73,7 +14,6 @@ describe('machine2', () => {
       initial: 'idle',
       states: {
         idle: {
-          type: 'sync',
           transitions: [
             {
               target: 'calc',
@@ -81,7 +21,6 @@ describe('machine2', () => {
           ],
         },
         calc: {
-          type: 'sync',
           transitions: [
             {
               target: FINAL_TARGET,
@@ -94,7 +33,6 @@ describe('machine2', () => {
     {
       actions: {
         action: (ctx, arg) => {
-          console.log('arg', arg);
           ctx.val = ctx.val + arg;
         },
       },

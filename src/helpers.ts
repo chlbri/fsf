@@ -1,33 +1,21 @@
 import { FINAL_TARGET } from './constants';
 import type {
-  AsyncState,
-  AsyncStateDefinition,
   FST,
-  PromiseWithTimeout,
   SAS,
   SingleOrArray,
-  State,
-  StateDefinition,
   StateFunction,
-  SyncState,
-  SyncStateDefinition,
   Transition,
   TransitionDefinition,
 } from './types';
 
 // #region Usual Functions
-export const asyncVoid = async () => {
-  return;
-};
-
 export const voidNothing = () => {
   return;
 };
 
 export const returnTrue = () => true;
 export const return0 = () => 0;
-export const asyncReturn0 = async () => 0;
-export const asyncReturnTrue = async () => true;
+
 export const identity = <T>(value: T) => value;
 // #endregion
 
@@ -132,49 +120,29 @@ export function extractTransitions<TC = any, TA = any>(
   return functions;
 }
 
-export function isSync(state: State): state is SyncState {
-  return state.type === 'sync';
-}
-
-export function isAsync(state: State): state is AsyncState {
-  return state.type === 'async';
-}
-
 export function isFinalTarget(value: unknown): value is FST {
   return value === FINAL_TARGET;
 }
 
-export function promiseWithTimeout({
-  timeoutMs,
-  promise,
-  failureMessage,
-}: PromiseWithTimeout): () => Promise<void> {
-  let timeoutHandle: ReturnType<typeof setTimeout>;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutHandle = setTimeout(
-      () => reject(new Error(failureMessage)),
-      timeoutMs,
-    );
-  });
+// export function promiseWithTimeout({
+//   timeoutMs,
+//   promise,
+//   failureMessage,
+// }: PromiseWithTimeout): () => Promise<void> {
+//   let timeoutHandle: ReturnType<typeof setTimeout>;
+//   const timeoutPromise = new Promise<never>((_, reject) => {
+//     timeoutHandle = setTimeout(
+//       () => reject(new Error(failureMessage)),
+//       timeoutMs,
+//     );
+//   });
 
-  return () =>
-    Promise.race([promise(), timeoutPromise]).then(result => {
-      clearTimeout(timeoutHandle);
-      return result;
-    });
-}
-
-export function isSyncDef<TA = any, TC = any>(
-  state: StateDefinition<TA, TC>,
-): state is SyncStateDefinition<TA, TC> {
-  return state.type === 'sync';
-}
-
-export function isAsyncDef<TA = any, TC = any>(
-  state: StateDefinition<TA, TC>,
-): state is AsyncStateDefinition<TA, TC> {
-  return state.type === 'async';
-}
+//   return () =>
+//     Promise.race([promise(), timeoutPromise]).then(result => {
+//       clearTimeout(timeoutHandle);
+//       return result;
+//     });
+// }
 
 export function deepClone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj)) as T;

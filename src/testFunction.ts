@@ -39,7 +39,7 @@ function testCase<
 ) {
   tester(constructInvite(invite), () => {
     beforeAll(() => {
-      machine.startAsync(args as TA);
+      machine.start(args as TA);
     });
     !!expected &&
       it(
