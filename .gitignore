@@ -2,6 +2,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=node
 
 #For Libraries
+lib
 
 #
 ### Node ###
@@ -46,7 +47,6 @@ bower_components
 build
 out
 dist
-lib
 
 # Dependency directories
 node_modules/

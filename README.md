@@ -14,34 +14,35 @@
 
 ## Features
 
-|                               | **'@bemedev/fsf'** |
-| ----------------------------- | :----------------: |
-| Finite states                 |         ✅         |
-| Initial state                 |         ✅         |
-| Transitions (object)          |         ❌         |
-| Transitions (string target)   |         ✅         |
-| Delayed transitions           |         ❌         |
-| Eventless transitions         |         ✅         |
-| Nested states                 |         ❌         |
-| Parallel states               |         ❌         |
-| History states                |         ❌         |
-| Final states                  |         ❌         |
-| Context                       |         ✅         |
-| Entry actions                 |         ❌         |
-| Exit actions                  |         ❌         |
-| Transition actions            |         ✅         |
-| Parameterized actions         |         ❌         |
-| Transition guards             |         ✅         |
-| Parameterized guards          |         ❌         |
-| Spawned actors                |         ❌         |
-| Invoked actors(promises only) |         ✅         |
+|                             | **'@bemedev/fsf'** |
+| --------------------------- | :----------------: |
+| Finite states               |         ✅         |
+| Initial state               |         ✅         |
+| Transitions (object)        |         ❌         |
+| Transitions (string target) |         ✅         |
+| Delayed transitions         |         ❌         |
+| Eventless transitions       |         ✅         |
+| Nested states               |         ❌         |
+| Parallel states             |         ❌         |
+| History states              |         ❌         |
+| Final states                |         ❌         |
+| Context                     |         ✅         |
+| Entry actions               |         ❌         |
+| Exit actions                |         ❌         |
+| Transition actions          |         ✅         |
+| Parameterized actions       |         ❌         |
+| Transition guards           |         ✅         |
+| Parameterized guards        |         ❌         |
+| Spawned actors              |         ❌         |
 
 <br/>
 <br/>
-If you want to use statechart features such as nested states, parallel states, history states, activities, invoked services, delayed transitions, transient transitions, etc. please use [`XState`](https://github.com/statelyai/xstate).
-<br/>
-<br/>
-<br/>
+
+**NB :** Only for sync functions <br/> <br/> If you want to use statechart
+features such as nested states, parallel states, history states,
+activities, invoked services, delayed transitions, transient transitions,
+etc. please use [`XState`](https://github.com/statelyai/xstate). <br/>
+<br/> <br/>
 
 ## Quick start
 
@@ -63,45 +64,39 @@ pnpm add @bemedev/fsf
 <br/>
 
 ```ts
-import { createMachine, serve, FINAL_TARGET } from '@bemedev/fsf';
+import { createFunction, serve, FINAL_TARGET } from '@bemedev/fsf';
 
-const machine = createMachine(
+const machine = createFunction(
   {
-    tsTypes: {
-      context: {} as { val: string },
+    schema: {
+      context: {} as { val: number },
+      args: 1 as number,
     },
-    context: { val: '' },
+    context: { val: 4 },
     initial: 'idle',
     states: {
       idle: {
-        type: 'sync',
         transitions: [
           {
-            target: 'prom',
+            target: 'calc',
           },
         ],
       },
-      prom: {
-        type: 'async',
-        promise: 'prom',
-        onDone: [
+      calc: {
+        transitions: [
           {
             target: FINAL_TARGET,
-            actions: ['ok'],
+            actions: ['action'],
           },
         ],
-        onError: [],
-        timeout: '0',
       },
     },
   },
   {
-    promises: {
-      prom: async () => true,
-    },
     actions: {
-      ok: ctx => {
-        ctx.val = 'true';
+      action: (ctx, arg) => {
+        console.log('arg', arg);
+        ctx.val = ctx.val + arg;
       },
     },
   },
@@ -116,13 +111,13 @@ const machine = createMachine(
 <br/>
 
 ```ts
-import { createMachine, serve } from '@bemedev/fsf';
+import { createFunction, serve } from '@bemedev/fsf';
 
-const toggleMachine = createMachine({...});
+const toggleMachine = createFunction({...});
 //Serve infer the return type (the context is the return type of the function)
 //Also it infers the fact that serve will be an async function or not
 //Here before the states contain an async one,
 //"service" will be an async function.
-const service = serve(machine); // Type: ()=>Promise<{ val: string }>
-(()=>await service())() // expected = { val: 'true' }
+const service = serve(machine); // Type: ()=>{ val: string }
+service() // expected = { val: 'true' }
 ```
