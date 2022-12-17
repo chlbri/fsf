@@ -69,23 +69,22 @@ import { createFunction, serve, FINAL_TARGET } from '@bemedev/fsf';
 const machine = createFunction(
   {
     schema: {
+      args: {} as number,
       context: {} as { val: number },
-      args: 1 as number,
+      returns: {} as number,
     },
     context: { val: 4 },
     initial: 'idle',
     states: {
       idle: {
-        transitions: [
-          {
-            target: 'calc',
-          },
-        ],
+        always: {
+          target: 'calc',
+        },
       },
       calc: {
-        transitions: [
+        always: [
           {
-            target: FINAL_TARGET,
+            target: 'final',
             actions: ['action'],
           },
         ],
@@ -93,12 +92,7 @@ const machine = createFunction(
     },
   },
   {
-    actions: {
-      action: (ctx, arg) => {
-        console.log('arg', arg);
-        ctx.val = ctx.val + arg;
-      },
-    },
+    overflow: 0,
   },
 );
 ```
@@ -111,13 +105,13 @@ const machine = createFunction(
 <br/>
 
 ```ts
-import { createFunction, serve } from '@bemedev/fsf';
+import  createFunction, { interpret } from '@bemedev/fsf';
 
 const toggleMachine = createFunction({...});
 //Serve infer the return type (the context is the return type of the function)
 //Also it infers the fact that serve will be an async function or not
 //Here before the states contain an async one,
 //"service" will be an async function.
-const service = serve(machine); // Type: ()=>{ val: string }
+const service = interpret(machine); // Type: ()=>{ val: string }
 service() // expected = { val: 'true' }
 ```

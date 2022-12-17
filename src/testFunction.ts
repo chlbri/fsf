@@ -1,6 +1,5 @@
 import { nanoid } from 'nanoid';
 import type { MachineFunction } from './machineFunction';
-import type { StateDefinition } from './types';
 
 type Test<TA = any, TC = any> = {
   invite?: string;
@@ -13,10 +12,9 @@ type Test<TA = any, TC = any> = {
 type Props<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
-  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
-  D = any,
+  R = TC,
 > = {
-  machine: MachineFunction<TA, TC, S, D>;
+  machine: MachineFunction<TA, TC, R>;
   tests: Test<TA, TC>[];
   // invite?: string;
   timeout?: number;
@@ -29,10 +27,9 @@ function constructInvite(invite = nanoid(7)) {
 function testCase<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
-  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
   D = any,
 >(
-  machine: MachineFunction<TA, TC, S, D>,
+  machine: MachineFunction<TA, TC, D>,
   { invite, args, expected, enteredStates }: Test<TA, TC>,
   timeout = 3500,
   tester: any = describe,
@@ -45,7 +42,7 @@ function testCase<
       it(
         'Result matches expected',
         async () => {
-          expect(machine.value).toStrictEqual(expected);
+          expect(machine.context).toStrictEqual(expected);
         },
         timeout,
       );
@@ -63,9 +60,8 @@ function testCase<
 export function ttest<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
-  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
   D = any,
->({ machine, tests, timeout }: Props<TA, TC, S, D>) {
+>({ machine, tests, timeout }: Props<TA, TC, D>) {
   tests.forEach(test => {
     testCase(machine.cloneTest, test, timeout);
   });
@@ -74,13 +70,12 @@ export function ttest<
 ttest.skip = <
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
-  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
-  D = any,
+  R = TC,
 >({
   machine,
   tests,
   timeout,
-}: Props<TA, TC, S, D>) => {
+}: Props<TA, TC, R>) => {
   tests.forEach(test => {
     testCase(machine.cloneTest, test, timeout, describe.skip);
   });
@@ -89,13 +84,12 @@ ttest.skip = <
 ttest.only = <
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
-  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
-  D = any,
+  R = any,
 >({
   machine,
   tests,
   timeout,
-}: Props<TA, TC, S, D>) => {
+}: Props<TA, TC, R>) => {
   tests.forEach(test => {
     testCase(machine.cloneTest, test, timeout, describe.only);
   });

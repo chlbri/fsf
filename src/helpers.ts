@@ -1,21 +1,18 @@
-import { FINAL_TARGET } from './constants';
 import type {
-  FST,
+  FinalState,
+  FinalStateDefinition,
   SAS,
   SingleOrArray,
+  StateDefinition,
   StateFunction,
   Transition,
   TransitionDefinition,
 } from './types';
 
 // #region Usual Functions
-export const voidNothing = () => {
-  return;
-};
-
+export const voidNothing = () => {};
 export const returnTrue = () => true;
 export const return0 = () => 0;
-
 export const identity = <T>(value: T) => value;
 // #endregion
 
@@ -27,8 +24,8 @@ function extractConditions<TC = any, TA = any>(
   if (!strings) return functions;
   if (Array.isArray(strings)) {
     functions.push(
-      ...strings.map(_entry => {
-        return conditions?.[_entry] ?? returnTrue;
+      ...strings.map(entry => {
+        return conditions?.[entry] ?? returnTrue;
       }),
     );
   } else {
@@ -55,8 +52,7 @@ export function extractActions<TC = any, TA = any>(
   return functions;
 }
 
-export function extractTransitionFunction<TC = any, TA = any>(
-  states: string[],
+function extractTransitionFromFunction<TC = any, TA = any>(
   source: string,
   options?: {
     actions?: Record<string, StateFunction<TC, TA, void>>;
@@ -65,29 +61,23 @@ export function extractTransitionFunction<TC = any, TA = any>(
 ): (value: Transition) => TransitionDefinition<TC, TA> {
   return transition => {
     const target = transition.target;
-    const stateNotExists =
-      !isFinalTarget(target) && !states.includes(target as string);
 
-    if (stateNotExists) {
-      throw `No state for "${target}"`;
-    }
-
+    //TODO: test error "Cannot transit to himself"
     if (source === target) {
       throw `Cannot transit to himself : ${source}`;
     }
+
     const description = transition.description;
-
     const actions = extractActions(transition.actions, options?.actions);
-
     const conditions = extractConditions(
-      transition.conditions,
+      transition.cond,
       options?.conditions,
     );
 
     return {
       source,
       actions,
-      conditions,
+      cond: conditions,
       target,
       description,
     };
@@ -95,33 +85,33 @@ export function extractTransitionFunction<TC = any, TA = any>(
 }
 
 export function extractTransitions<TC = any, TA = any>(
-  states: string[],
   source: string,
-  transitions?: SingleOrArray<Transition>,
+  always: SingleOrArray<Transition>,
   options?: {
     actions?: Record<string, StateFunction<TC, TA, void>>;
     conditions?: Record<string, StateFunction<TC, TA, boolean>>;
   },
 ) {
   const functions: TransitionDefinition<TC, TA>[] = [];
-  if (!transitions) return functions;
 
-  if (Array.isArray(transitions)) {
+  if (Array.isArray(always)) {
     functions.push(
-      ...transitions.map(
-        extractTransitionFunction(states, source, options),
-      ),
+      ...always.map(extractTransitionFromFunction(source, options)),
     );
   } else {
-    functions.push(
-      extractTransitionFunction(states, source, options)(transitions),
-    );
+    functions.push(extractTransitionFromFunction(source, options)(always));
   }
   return functions;
 }
 
-export function isFinalTarget(value: unknown): value is FST {
-  return value === FINAL_TARGET;
+export function isFinalState(value: any): value is FinalState {
+  return 'data' in value && typeof value.data === 'string';
+}
+
+export function isFinalStateDefinition<TA = any, TC = any, R = any>(
+  value: StateDefinition<TA, TC, R>,
+): value is FinalStateDefinition<TA, TC, R> {
+  return 'data' in value && typeof value.data === 'function';
 }
 
 // export function promiseWithTimeout({
@@ -143,7 +133,3 @@ export function isFinalTarget(value: unknown): value is FST {
 //       return result;
 //     });
 // }
-
-export function deepClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj)) as T;
-}

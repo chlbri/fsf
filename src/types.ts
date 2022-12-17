@@ -1,4 +1,3 @@
-import { FINAL_TARGET } from './constants';
 import type { MachineFunction } from './machineFunction';
 
 /* eslint-disable @typescript-eslint/ban-types */
@@ -10,26 +9,38 @@ export type StateFunction<TC = any, TA = any, R = any> = (
 export type SingleOrArray<T> = T | T[];
 
 export type TransitionDefinition<TC = any, TA = any> = {
-  target: string | FST;
+  target: string;
   source: string;
   actions: StateFunction<TC, TA, void>[];
-  conditions: StateFunction<TC, TA, boolean>[];
+  //TODO: Better conditions type
+  cond: StateFunction<TC, TA, boolean>[];
   description?: string;
 };
 
 export type BaseStateDefinition<TA = any, TC = any> = {
   value: string;
-  matches: <T extends string>(value: T) => boolean;
   entry: StateFunction<TC, TA, void>[];
+};
+
+export type SimpleStateDefinition<
+  TA = any,
+  TC = any,
+> = BaseStateDefinition<TA, TC> & {
+  always: TransitionDefinition<TC, TA>[];
   exit: StateFunction<TC, TA, void>[];
 };
 
-export type StateDefinition<TA = any, TC = any> = BaseStateDefinition<
-  TA,
-  TC
-> & {
-  transitions: TransitionDefinition<TC, TA>[];
+export type FinalStateDefinition<
+  TA = any,
+  TC = any,
+  R = any,
+> = BaseStateDefinition<TA, TC> & {
+  data: StateFunction<TC, TA, R>;
 };
+
+export type StateDefinition<TA = any, TC = any, R = any> =
+  | SimpleStateDefinition<TA, TC>
+  | FinalStateDefinition<TA, TC, R>;
 
 export type PromiseWithTimeout = {
   timeoutMs: number;
@@ -39,42 +50,50 @@ export type PromiseWithTimeout = {
 
 export type SAS = SingleOrArray<string>;
 
+//TODO: Better transitions type
 export type Transition = {
-  target: string | FST;
-  conditions?: SAS;
+  target: string;
+  //TODO: Better conditions type
+  cond?: SAS;
   actions?: SAS;
   description?: string;
 };
 
-export type State = {
+export type BaseState = {
   entry?: SAS;
-  exit?: SAS;
+
   description?: string;
-  transitions: SingleOrArray<Transition>;
 };
 
-export type Config<TA = any, TC = any, D = TC> = {
+export type SimpleState = BaseState & {
+  exit?: SAS;
+  always: SingleOrArray<Transition>;
+};
+
+export type FinalState = BaseState & {
+  data: string;
+};
+
+export type State = SimpleState | FinalState;
+
+export type Config<TA = any, TC = any, R = TC> = {
   context: TC;
   initial: string;
-  args?: TA;
   schema?: {
     context?: TC;
     args?: TA;
-    data?: D;
+    data?: R;
   };
-  data?: StateFunction<TC, TA, D>;
+  data?: string;
   states: Record<string, State>;
 };
 
-export type Options<TC = any, TA = any> = {
+export type Options<TC = any, TA = any, R = any> = {
   actions?: Record<string, StateFunction<TC, TA, any>>;
   conditions?: Record<string, StateFunction<TC, TA, boolean>>;
-  promises?: Record<string, StateFunction<TC, TA, Promise<any>>>;
-  timeouts?: Record<string, number>;
+  datas?: Record<string, StateFunction<TC, TA, R>>;
   overflow?: number;
 };
-
-export type FST = typeof FINAL_TARGET;
 
 export type UndefinyFunction<T, R> = T extends undefined
   ? () => R
