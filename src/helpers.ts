@@ -10,6 +10,7 @@ import type {
 } from './types';
 
 // #region Usual Functions
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 export const voidNothing = () => {};
 export const returnTrue = () => true;
 export const return0 = () => 0;
