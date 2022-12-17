@@ -1,50 +1,53 @@
-import { extractActions, extractTransitions } from './helpers';
+import {
+  extractActions,
+  extractTransitions,
+  identity,
+  isFinalState,
+} from './helpers';
 import { MachineFunction } from './machineFunction';
 import type { Config, Options, StateDefinition } from './types';
 
-export function createFunction<
+export default function createFunction<
   TA = undefined,
   TC extends Record<string, unknown> = Record<string, unknown>,
-  D = TC,
->(config: Config<TA, TC, D>, options?: Options<TC, TA>) {
+  R = TC,
+>(config: Config<TA, TC, R>, options?: Options<TC, TA, R>) {
   // #region Props
   const context = config.context;
   const initial = config.initial;
   const states: StateDefinition<TA, TC>[] = [];
   const __states = Object.entries(config.states);
-  const stringStates = __states.map(([key]) => key);
   // #endregion
 
   for (const [value, state] of __states) {
-    const matches = <T extends string>(_value: T) => _value === value;
-    const source = value;
     const entry = extractActions(state.entry);
-    const exit = extractActions(state.exit);
-
-    states.push({
-      value,
-      entry,
-      exit,
-      matches,
-      transitions: extractTransitions(
-        stringStates,
-        source,
-        state.transitions,
-        options,
-      ),
-    });
+    if (isFinalState(state)) {
+      const data = options?.datas?.[state.data] ?? identity;
+      states.push({
+        value,
+        entry,
+        data,
+      });
+    } else {
+      const source = value;
+      const exit = extractActions(state.exit);
+      states.push({
+        value,
+        entry,
+        exit,
+        always: extractTransitions(source, state.always, options),
+      });
+    }
   }
 
   // #region Props Helpers
-  const dataF = config.data;
   const overflow = options?.overflow;
   const _states = states as StateDefinition<TA, TC>[];
   // #endregion
 
-  return new MachineFunction<TA, TC, StateDefinition<TA, TC>, D>({
+  return new MachineFunction<TA, TC, R>({
     _states,
     context,
-    dataF,
     initial,
     overflow,
   });

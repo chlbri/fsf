@@ -1,7 +1,7 @@
 {
   "name": "@bemedev/fsf",
-  "version": "0.2.1",
-  "description": "https://github.com/chlbri/fstate.git",
+  "version": "0.2.2",
+  "description": "A libray for finite state functions",
   "author": {
     "name": "chlbri",
     "email": "bri_lviu@icloud.com",
@@ -36,7 +36,7 @@
     "build": "rm -rf lib && pnpm run rollup",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest --passWithNoTests",
-    "remove": "rm -rf lib node_modules pnpm-lock.yaml",
+    "remove": "rm -rf node_modules pnpm-lock.yaml",
     "clean": "pnpm run remove && pnpm run config",
     "prettier": "prettier --write \"src/**/*.{ts,tsx}\"",
     "eslint": "eslint \"{src/**/*,App}.{ts,tsx}\"",
@@ -70,13 +70,13 @@
     "shelljs": "^0.8.5",
     "tsd": "^0.25.0",
     "typescript": "^4.9.4",
-    "vite": "^4.0.1",
+    "vite": "3.2.4",
     "vite-tsconfig-paths": "^4.0.3",
-    "vitest": "^0.25.8"
+    "vitest": "0.25.2",
+    "nanoid": "^4.0.0"
   },
   "repository": "https://github.com/chlbri/fstate.git",
   "dependencies": {
-    "lodash.clonedeep": "^4.5.0",
-    "nanoid": "^4.0.0"
+    "lodash.clonedeep": "^4.5.0"
   }
 }

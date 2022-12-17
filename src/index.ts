@@ -1,14 +1,13 @@
-export * from './constants';
-export * from './createFunction';
+export { default } from './createFunction';
 export {
   identity,
-  isFinalTarget,
+  isFinalState,
   return0,
   returnTrue,
   voidNothing,
 } from './helpers';
-export * from './serve';
-export * from './testFunction';
+export * from './interpret';
+export * from './machineFunction';
 export type {
   Config,
   GetTA,

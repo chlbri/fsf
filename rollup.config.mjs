@@ -53,12 +53,6 @@ const bundles = (...values) => {
   return out;
 };
 
-const config = bundles(
-  'helpers',
-  'machineFunction',
-  'index',
-  'testFunction',
-  'serve',
-);
+const config = bundles('helpers', 'index', 'createFunction', 'interpret');
 
 export default config;

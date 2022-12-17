@@ -1,61 +1,61 @@
 import cloneDeep from 'lodash.clonedeep';
-import { identity, isFinalTarget } from './helpers';
-import type {
-  StateDefinition,
-  StateFunction,
-  UndefinyFunction,
-} from './types';
+import { identity, isFinalStateDefinition } from './helpers';
+import type { StateDefinition, UndefinyFunction } from './types';
 
 type MarchineArgs<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
-  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
-  D = any,
+  R = TC,
 > = {
-  _states: S[];
+  _states: StateDefinition<TA, TC, R>[];
   initial: string;
   context: TC;
-  dataF?: StateFunction<TC, TA, D>;
   overflow?: number;
   test?: boolean;
 };
 
+//TODO: Create a test library
+/**
+ * @class Class representing a machine function
+ *
+ * Implements syntax of {@link XState https://xstate.js.org/docs/guides/states.html#state-nodes}
+ */
 export class MachineFunction<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
-  S extends StateDefinition<TA, TC> = StateDefinition<TA, TC>,
-  D = any,
+  R = TC,
 > {
   #args!: TA;
   readonly #initialContext: TC;
 
   // #region Props
-  #states: S[];
+  #states: StateDefinition<TA, TC, R>[];
+  #data: R | undefined;
   #initial: string;
   #context: TC;
-  readonly #dataF: StateFunction<TC, TA, D>;
   readonly #overflow: number;
   #test: boolean;
+  #currentState!: StateDefinition<TA, TC>;
+  #hasNext = true;
   // #endregion
 
   constructor({
     _states,
     initial,
     context,
-    dataF = identity as StateFunction<TC, TA, D>,
     overflow = 100,
     test = false,
-  }: MarchineArgs<TA, TC, S, D>) {
-    // #region Initilize props
+  }: MarchineArgs<TA, TC, R>) {
+    // #region Initialize props
     this.#states = _states;
     this.#initial = initial;
     this.#context = context;
-    this.#dataF = dataF;
     this.#overflow = overflow;
     this.#test = test;
     // #endregion
 
     this.#initialContext = cloneDeep(context);
+    Object.freeze(this.#initialContext);
     this.#initializeStates();
   }
 
@@ -64,15 +64,15 @@ export class MachineFunction<
       _states: this.#states,
       initial: this.#initial,
       context: this.#context,
-      dataF: this.#dataF,
       overflow: this.#overflow,
       test: this.#test,
     };
   }
 
-  readonly cloneWithValues = (
-    props?: Partial<MarchineArgs<TA, TC, S, D>>,
-  ) => new MachineFunction({ ...this.#props, ...props });
+  readonly cloneWithValues = (props?: Partial<MarchineArgs<TA, TC, R>>) =>
+    new MachineFunction({ ...this.#props, ...props });
+
+  readonly matches = (value: string) => this.#currentState.value === value;
 
   get clone() {
     const context = cloneDeep(this.#initialContext);
@@ -80,8 +80,6 @@ export class MachineFunction<
   }
 
   get cloneTest() {
-    //TODO: Addd deepclone
-
     const context = cloneDeep(this.#initialContext);
     const test = true;
     return this.cloneWithValues({ test, context });
@@ -100,12 +98,6 @@ export class MachineFunction<
     this.#test && this.enteredStates.push(this.#currentState.value);
   };
 
-  #hasNext = true;
-
-  get data(): D {
-    return this.#dataF(this.#context, this.#args);
-  }
-
   #setCurrentState = (value: string) => {
     const out = this.#states.find(_state => _state.value === value);
     if (!out) throw `No state found for ${value}`;
@@ -113,61 +105,69 @@ export class MachineFunction<
     this.#test && this.enteredStates.push(out.value);
   };
 
-  #nextSync = () => {
+  #next = () => {
     const current = { ...this.#currentState };
     const args = this.#clonedArgs;
-    this.#hasNext = true;
-    const transitions = current.transitions;
-    for (const transition of transitions) {
-      const cond = transition.conditions
-        .map(condition => condition({ ...this.#context }, args as TA))
-        .every(value => value === true);
-      if (!cond) continue;
-      transition.actions.forEach(action =>
-        action(this.#context, args as TA),
-      );
-      if (isFinalTarget(transition.target)) {
-        this.#hasNext = false;
-        return;
+    if (isFinalStateDefinition(current)) {
+      current.entry.forEach(entry => entry(this.#context, args as TA));
+      this.#data = current.data(this.#context, args as TA);
+      this.#hasNext = false;
+    } else {
+      current.entry.forEach(entry => entry(this.#context, args as TA));
+
+      //TODO: Better transitions
+      for (const transition of current.always) {
+        //TODO: Better conditions
+        const cond = transition.cond
+          .map(condition => condition({ ...this.#context }, args as TA))
+          .every(identity);
+        if (!cond) continue;
+        transition.actions.forEach(action =>
+          action(this.#context, args as TA),
+        );
+
+        this.#setCurrentState(transition.target);
+        break;
       }
-      this.#setCurrentState(transition.target);
-      break;
+
+      current.exit.forEach(entry => entry(this.#context, args as TA));
     }
   };
 
   get #clonedArgs() {
-    //TODO: Addd deepclone
-    if (this.#args instanceof Array) {
-      return [...this.#args];
-    }
-    if (typeof this.#args === 'object') {
-      return { ...this.#args };
-    }
-    return this.#args;
+    return cloneDeep(this.#args);
   }
 
+  get data() {
+    return this.#data; //?
+  }
+
+  #rinit = (args: TA) => {
+    this.#args = args;
+    this.#hasNext = true;
+    this.#context = cloneDeep(this.#initialContext);
+    this.#setCurrentState(this.#initial);
+    return 0;
+  };
+
   readonly start = (args => {
-    let iterator = 0;
-    this.#args = args as TA;
+    let iterator = this.#rinit(args);
 
     while (this.#hasNext) {
-      this.#hasNext = false;
-      this.#nextSync();
+      this.#next();
       iterator++;
       if (iterator >= this.#overflow) {
         throw 'Overflow transitions';
       }
     }
     return this.data;
-  }) as UndefinyFunction<TA, D>;
-
-  #currentState!: S;
+  }) as UndefinyFunction<TA, R>;
 
   get state() {
     return this.#currentState;
   }
 
-  get value() {
+  get context() {
     return this.#context;
   }
 
