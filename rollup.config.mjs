@@ -20,7 +20,7 @@ const bundleDts = value => ({
 const bundleJS = value => {
   return {
     input: `src/${value}.ts`,
-    external: ['@bemedev/x-guard'],
+    external: ['lodash.clonedeep', '@bemedev/x-guard'],
     plugins: [esbuild(), terser({}), tsConfigPaths()],
     output: [
       {
