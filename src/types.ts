@@ -3,17 +3,27 @@ import type { MachineFunction } from './machineFunction';
 /* eslint-disable @typescript-eslint/ban-types */
 export type StateFunction<TC = any, TA = any, R = any> = (
   context: TC,
-  args: TA,
+  events: TA,
 ) => R;
 
 export type SingleOrArray<T> = T | T[];
+
+// #region Guards
+
+export type SimpleGuard = string;
+export type GuardUnion = GuardAnd | GuardOr | SimpleGuard;
+export type GuardAnd = { and: SingleOrArray<GuardUnion> };
+export type GuardOr = { or: SingleOrArray<GuardUnion> };
+export type Guards = SingleOrArray<GuardUnion>;
+export type GuardDef<TA = any, TC = any> = StateFunction<TC, TA, boolean>;
+
+// #endregion
 
 export type TransitionDefinition<TC = any, TA = any> = {
   target: string;
   source: string;
   actions: StateFunction<TC, TA, void>[];
-  //TODO: Better conditions type
-  cond: StateFunction<TC, TA, boolean>[];
+  cond?: GuardDef<TA, TC>;
   description?: string;
 };
 
@@ -50,18 +60,17 @@ export type PromiseWithTimeout = {
 
 export type SAS = SingleOrArray<string>;
 
-//TODO: Better transitions type
-export type Transition = {
-  target: string;
-  //TODO: Better conditions type
-  cond?: SAS;
-  actions?: SAS;
-  description?: string;
-};
+export type Transition =
+  | string
+  | {
+      target: string;
+      cond?: Guards;
+      actions?: SAS;
+      description?: string;
+    };
 
 export type BaseState = {
   entry?: SAS;
-
   description?: string;
 };
 
@@ -81,23 +90,20 @@ export type Config<TA = any, TC = any, R = TC> = {
   initial: string;
   schema?: {
     context?: TC;
-    args?: TA;
+    events?: TA;
     data?: R;
   };
   data?: string;
   states: Record<string, State>;
 };
 
-export type Options<TC = any, TA = any, R = any> = {
+export type Options<TA = any, TC = any, R = any> = {
   actions?: Record<string, StateFunction<TC, TA, any>>;
-  conditions?: Record<string, StateFunction<TC, TA, boolean>>;
+  guards?: Record<string, StateFunction<TC, TA, boolean>>;
   datas?: Record<string, StateFunction<TC, TA, R>>;
   overflow?: number;
+  strict?: boolean;
 };
-
-export type UndefinyFunction<T, R> = T extends undefined
-  ? () => R
-  : (args: T) => R;
 
 export type GetTA<T extends MachineFunction> = T extends MachineFunction<
   infer U

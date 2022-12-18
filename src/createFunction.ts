@@ -11,16 +11,22 @@ export default function createFunction<
   TA = undefined,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
->(config: Config<TA, TC, R>, options?: Options<TC, TA, R>) {
+>(config: Config<TA, TC, R>, options?: Options<TA, TC, R>) {
   // #region Props
   const context = config.context;
   const initial = config.initial;
   const states: StateDefinition<TA, TC>[] = [];
   const __states = Object.entries(config.states);
+  const __keys = Object.keys(config.states);
+  const strict = options?.strict;
   // #endregion
 
+  if (__states.length < 1) throw new Error('No states');
+
+  if (!__keys.includes(initial)) throw new Error('No initial state');
+
   for (const [value, state] of __states) {
-    const entry = extractActions(state.entry);
+    const entry = extractActions(state.entry, options?.actions, strict);
     if (isFinalState(state)) {
       const data = options?.datas?.[state.data] ?? identity;
       states.push({
@@ -30,12 +36,18 @@ export default function createFunction<
       });
     } else {
       const source = value;
-      const exit = extractActions(state.exit);
+      const always = extractTransitions({
+        source,
+        always: state.always,
+        options,
+        __keys,
+      });
+      const exit = extractActions(state.exit, options?.actions, strict);
       states.push({
         value,
         entry,
         exit,
-        always: extractTransitions(source, state.always, options),
+        always,
       });
     }
   }
@@ -50,5 +62,7 @@ export default function createFunction<
     context,
     initial,
     overflow,
+    config,
+    options,
   });
 }
