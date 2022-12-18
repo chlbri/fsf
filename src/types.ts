@@ -50,14 +50,15 @@ export type PromiseWithTimeout = {
 
 export type SAS = SingleOrArray<string>;
 
-//TODO: Better transitions type
-export type Transition = {
-  target: string;
-  //TODO: Better conditions type
-  cond?: SAS;
-  actions?: SAS;
-  description?: string;
-};
+export type Transition =
+  | string
+  | {
+      target: string;
+      //TODO: Better conditions type
+      cond?: SAS;
+      actions?: SAS;
+      description?: string;
+    };
 
 export type BaseState = {
   entry?: SAS;
@@ -67,7 +68,7 @@ export type BaseState = {
 
 export type SimpleState = BaseState & {
   exit?: SAS;
-  always: SingleOrArray<Transition>;
+  always: SingleOrArray<Exclude<Transition, string>> | string;
 };
 
 export type FinalState = BaseState & {

@@ -115,7 +115,6 @@ export class MachineFunction<
     } else {
       current.entry.forEach(entry => entry(this.#context, args as TA));
 
-      //TODO: Better transitions
       for (const transition of current.always) {
         //TODO: Better conditions
         const cond = transition.cond

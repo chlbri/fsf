@@ -61,24 +61,31 @@ function extractTransitionFromFunction<TC = any, TA = any>(
   },
 ): (value: Transition) => TransitionDefinition<TC, TA> {
   return transition => {
+    if (typeof transition === 'string') {
+      if (source === transition) {
+        throw `Cannot transit to himself : ${source}`;
+      }
+      return {
+        source,
+        actions: [],
+        cond: [],
+        target: transition,
+      };
+    }
     const target = transition.target;
 
-    //TODO: test error "Cannot transit to himself"
     if (source === target) {
       throw `Cannot transit to himself : ${source}`;
     }
 
     const description = transition.description;
     const actions = extractActions(transition.actions, options?.actions);
-    const conditions = extractConditions(
-      transition.cond,
-      options?.conditions,
-    );
+    const cond = extractConditions(transition.cond, options?.conditions);
 
     return {
       source,
       actions,
-      cond: conditions,
+      cond,
       target,
       description,
     };
