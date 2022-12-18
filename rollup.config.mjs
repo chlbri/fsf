@@ -20,7 +20,7 @@ const bundleDts = value => ({
 const bundleJS = value => {
   return {
     input: `src/${value}.ts`,
-    external: ['lodash.clonedeep', 'nanoid'],
+    external: ['@bemedev/x-guard'],
     plugins: [esbuild(), terser({}), tsConfigPaths()],
     output: [
       {
@@ -53,6 +53,11 @@ const bundles = (...values) => {
   return out;
 };
 
-const config = bundles('helpers/index', 'index', 'createFunction', 'interpret');
+const config = bundles(
+  'helpers/index',
+  'index',
+  'createFunction',
+  'interpret',
+);
 
 export default config;
