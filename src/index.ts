@@ -1,5 +1,6 @@
 export { default } from './createFunction';
 export {
+  assignGuards,
   identity,
   isFinalState,
   return0,

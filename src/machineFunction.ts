@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash.clonedeep';
-import { identity, isFinalStateDefinition } from './helpers';
-import type { StateDefinition, UndefinyFunction } from './types';
+import { isFinalStateDefinition } from './helpers';
+import type { Config, Options, StateDefinition } from './types';
 
 type MarchineArgs<
   TA = any,
@@ -11,7 +11,9 @@ type MarchineArgs<
   initial: string;
   context: TC;
   overflow?: number;
-  test?: boolean;
+  config: Config<TA, TC, R>;
+  options?: Options<TA, TC, R>;
+  // test?: boolean;
 };
 
 //TODO: Create a test library
@@ -25,7 +27,7 @@ export class MachineFunction<
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
 > {
-  #args!: TA;
+  #events!: TA;
   readonly #initialContext: TC;
 
   // #region Props
@@ -34,9 +36,22 @@ export class MachineFunction<
   #initial: string;
   #context: TC;
   readonly #overflow: number;
-  #test: boolean;
+  #config: Config<TA, TC, R>;
+  #options?: Options<TA, TC, R>;
   #currentState!: StateDefinition<TA, TC>;
   #hasNext = true;
+  readonly enteredStates: string[] = [];
+
+  // #endregion
+
+  // #region Getters
+  get __config() {
+    return this.#config;
+  }
+
+  get __options() {
+    return this.#options;
+  }
   // #endregion
 
   constructor({
@@ -44,19 +59,23 @@ export class MachineFunction<
     initial,
     context,
     overflow = 100,
-    test = false,
+    config,
+    options,
   }: MarchineArgs<TA, TC, R>) {
     // #region Initialize props
     this.#states = _states;
     this.#initial = initial;
     this.#context = context;
     this.#overflow = overflow;
-    this.#test = test;
+    this.#config = config;
+    this.#options = options;
+    // this.#test = test;
+
     // #endregion
 
     this.#initialContext = cloneDeep(context);
     Object.freeze(this.#initialContext);
-    this.#initializeStates();
+    this._initializeStates();
   }
 
   get #props() {
@@ -65,110 +84,104 @@ export class MachineFunction<
       initial: this.#initial,
       context: this.#context,
       overflow: this.#overflow,
-      test: this.#test,
+      config: this.#config,
+      options: this.#options,
+      // test: this.#test,
     };
   }
 
   readonly cloneWithValues = (props?: Partial<MarchineArgs<TA, TC, R>>) =>
     new MachineFunction({ ...this.#props, ...props });
 
-  readonly matches = (value: string) => this.#currentState.value === value;
+  // readonly matches = (value: string) => this.#currentState.value === value;
 
   get clone() {
     const context = cloneDeep(this.#initialContext);
     return this.cloneWithValues({ context });
   }
 
-  get cloneTest() {
-    const context = cloneDeep(this.#initialContext);
-    const test = true;
-    return this.cloneWithValues({ test, context });
-  }
+  // get cloneTest() {
+  //   const context = cloneDeep(this.#initialContext);
+  //   const test = true;
+  //   return this.cloneWithValues({ test, context });
+  // }
 
-  #initializeStates = () => {
+  protected _initializeStates = () => {
     const __allStates = this.#states;
     const initial = this.#initial;
-    if (__allStates.length < 1) throw 'No states';
 
-    const findInitial = __allStates.find(state => state.value === initial);
-    if (!findInitial) throw 'No initial state';
-
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const findInitial = __allStates.find(
+      state => state.value === initial,
+    )!;
     this.#currentState = findInitial;
 
-    this.#test && this.enteredStates.push(this.#currentState.value);
+    // this.#test && this.enteredStates.push(this.#currentState.value);
   };
 
-  #setCurrentState = (value: string) => {
-    const out = this.#states.find(_state => _state.value === value);
-    if (!out) throw `No state found for ${value}`;
+  protected _setCurrentState = (value: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const out = this.#states.find(_state => _state.value === value)!;
     this.#currentState = out;
-    this.#test && this.enteredStates.push(out.value);
+    // this.#test && this.enteredStates.push(out.value);
   };
 
   #next = () => {
     const current = { ...this.#currentState };
-    const args = this.#clonedArgs;
+    const events = this.#clonedEvents;
     if (isFinalStateDefinition(current)) {
-      current.entry.forEach(entry => entry(this.#context, args as TA));
-      this.#data = current.data(this.#context, args as TA);
+      current.entry.forEach(entry => entry(this.#context, events));
+      this.#data = current.data(this.#context, events);
       this.#hasNext = false;
     } else {
-      current.entry.forEach(entry => entry(this.#context, args as TA));
+      current.entry.forEach(entry => entry(this.#context, events));
 
       for (const transition of current.always) {
-        //TODO: Better conditions
-        const cond = transition.cond
-          .map(condition => condition({ ...this.#context }, args as TA))
-          .every(identity);
-        if (!cond) continue;
+        const _cond = transition.cond;
+        if (_cond) {
+          const check = _cond({ ...this.#context }, events);
+          if (!check) continue;
+        }
         transition.actions.forEach(action =>
-          action(this.#context, args as TA),
+          action(this.#context, events),
         );
 
-        this.#setCurrentState(transition.target);
+        this._setCurrentState(transition.target);
         break;
       }
 
-      current.exit.forEach(entry => entry(this.#context, args as TA));
+      current.exit.forEach(entry => entry(this.#context, events));
     }
   };
 
-  get #clonedArgs() {
-    return cloneDeep(this.#args);
+  get #clonedEvents() {
+    return cloneDeep(this.#events);
   }
 
   get data() {
     return this.#data; //?
   }
 
-  #rinit = (args: TA) => {
-    this.#args = args;
+  #rinit = (events?: TA) => {
+    this.#events = events ?? this.#events ?? ({} as TA);
     this.#hasNext = true;
     this.#context = cloneDeep(this.#initialContext);
-    this.#setCurrentState(this.#initial);
+    this._setCurrentState(this.#initial);
     return 0;
   };
 
-  readonly start = (args => {
-    let iterator = this.#rinit(args);
+  readonly start = (events?: TA) => {
+    let iterator = this.#rinit(events);
 
     while (this.#hasNext) {
       this.#next();
       iterator++;
       if (iterator >= this.#overflow) {
-        throw 'Overflow transitions';
+        throw new Error('Overflow transitions');
       }
     }
     return this.data;
-  }) as UndefinyFunction<TA, R>;
+  };
 
-  get state() {
-    return this.#currentState;
-  }
-
-  get context() {
-    return this.#context;
-  }
-
-  readonly enteredStates: string[] = [];
+  readonly build = this.start;
 }

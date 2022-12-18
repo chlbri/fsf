@@ -7,7 +7,7 @@ test('#1: Overflow transitions', () => {
     {
       schema: {
         context: {} as { val: number },
-        args: {} as number,
+        events: {} as number,
         data: {} as number,
       },
       context: { val: 4 },
@@ -25,6 +25,9 @@ test('#1: Overflow transitions', () => {
               actions: ['action'],
             },
           ],
+        },
+        final: {
+          data: 'any',
         },
       },
     },
@@ -36,42 +39,59 @@ test('#1: Overflow transitions', () => {
   expect(func).toThrowError('Overflow transitions');
 });
 
-test('#2: No state found for ', () => {
-  const machine = createFunction(
-    {
-      schema: {
-        context: {} as { val: number },
-        args: {} as number,
-        data: {} as number,
-      },
-      context: { val: 4 },
-      initial: 'idle',
-      states: {
-        idle: {
-          always: {
-            target: 'calc',
+describe('#2: State final is not defined', () => {
+  test('String', () => {
+    const machine = () =>
+      createFunction({
+        schema: {
+          context: {} as { val: number },
+          events: {} as number,
+          data: {} as number,
+        },
+        context: { val: 4 },
+        initial: 'idle',
+        states: {
+          idle: {
+            always: {
+              target: 'calc',
+            },
+          },
+          calc: {
+            always: 'final',
           },
         },
-        calc: {
-          always: [
-            {
-              target: 'final',
-              actions: ['action'],
+      });
+    expect(machine).toThrowError('State final is not defined');
+  });
+
+  test('Object', () => {
+    const machine = () =>
+      createFunction({
+        schema: {
+          context: {} as { val: number },
+          events: {} as number,
+          data: {} as number,
+        },
+        context: { val: 4 },
+        initial: 'idle',
+        states: {
+          idle: {
+            always: {
+              target: 'calc',
             },
-          ],
+          },
+          calc: {
+            always: [
+              {
+                target: 'final',
+                actions: ['action'],
+              },
+            ],
+          },
         },
-      },
-    },
-    {
-      actions: {
-        action: (ctx, arg) => {
-          ctx.val = ctx.val + arg;
-        },
-      },
-    },
-  );
-  const func = () => interpret(machine)(3);
-  expect(func).toThrowError('No state found for final');
+      });
+    expect(machine).toThrowError('State final is not defined');
+  });
 });
 
 test('#3: No initial state', () => {
@@ -79,7 +99,7 @@ test('#3: No initial state', () => {
     createFunction({
       schema: {
         context: {} as { val: number },
-        args: {} as number,
+        events: {} as number,
         data: {} as number,
       },
       context: { val: 4 },
@@ -89,6 +109,9 @@ test('#3: No initial state', () => {
           always: {
             target: 'calc',
           },
+        },
+        calc: {
+          data: 'val',
         },
       },
     });
@@ -100,7 +123,7 @@ test('#4: No states', () => {
     createFunction({
       schema: {
         context: {} as { val: number },
-        args: {} as number,
+        events: {} as number,
         data: {} as number,
       },
       context: { val: 4 },
@@ -116,7 +139,7 @@ describe('#5: Cannot transit to himself', () => {
       createFunction({
         schema: {
           context: {} as { val: number },
-          args: {} as number,
+          events: {} as number,
           data: {} as number,
         },
         context: { val: 4 },
@@ -134,7 +157,7 @@ describe('#5: Cannot transit to himself', () => {
       createFunction({
         schema: {
           context: {} as { val: number },
-          args: {} as number,
+          events: {} as number,
           data: {} as number,
         },
         context: { val: 4 },
@@ -148,5 +171,119 @@ describe('#5: Cannot transit to himself', () => {
         },
       });
     expect(machine).toThrowError('Cannot transit to himself : idle');
+  });
+});
+
+describe('#6: Strict errors', () => {
+  test('#1: transition actions string', () => {
+    const machine = () =>
+      createFunction(
+        {
+          schema: {
+            context: {} as { val: number },
+            events: {} as number,
+            data: {} as number,
+          },
+          context: { val: 4 },
+          initial: 'idle',
+          states: {
+            idle: {
+              always: {
+                target: 'any',
+                actions: 'action',
+              },
+            },
+            any: {
+              data: 'any',
+            },
+          },
+        },
+        { strict: true },
+      );
+    expect(machine).toThrowError('Action action is not provided');
+  });
+
+  test('#2: transition actions array', () => {
+    const machine = () =>
+      createFunction(
+        {
+          schema: {
+            context: {} as { val: number },
+            events: {} as number,
+            data: {} as number,
+          },
+          context: { val: 4 },
+          initial: 'idle',
+          states: {
+            idle: {
+              always: {
+                target: 'any',
+                actions: ['action'],
+              },
+            },
+            any: {
+              data: 'any',
+            },
+          },
+        },
+        { strict: true },
+      );
+    expect(machine).toThrowError('Action action is not provided');
+  });
+
+  test('#3: No guards provided', () => {
+    const machine = () =>
+      createFunction(
+        {
+          schema: {
+            context: {} as { val: number },
+            events: {} as number,
+            data: {} as number,
+          },
+          context: { val: 4 },
+          initial: 'idle',
+          states: {
+            idle: {
+              always: {
+                target: 'any',
+                cond: 'cond',
+              },
+            },
+            any: {
+              data: 'any',
+            },
+          },
+        },
+        { strict: true },
+      );
+    expect(machine).toThrowError('No guards provided');
+  });
+
+  test('#4: transition guards string', () => {
+    const machine = () =>
+      createFunction(
+        {
+          schema: {
+            context: {} as { val: number },
+            events: {} as number,
+            data: {} as number,
+          },
+          context: { val: 4 },
+          initial: 'idle',
+          states: {
+            idle: {
+              always: {
+                target: 'any',
+                cond: 'cond',
+              },
+            },
+            any: {
+              data: 'any',
+            },
+          },
+        },
+        { strict: true, guards: {} },
+      );
+    expect(machine).toThrowError('Guard "cond" is not provided');
   });
 });

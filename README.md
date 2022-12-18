@@ -69,7 +69,7 @@ import { createFunction, serve, FINAL_TARGET } from '@bemedev/fsf';
 const machine = createFunction(
   {
     schema: {
-      args: {} as number,
+      events: {} as number,
       context: {} as { val: number },
       returns: {} as number,
     },

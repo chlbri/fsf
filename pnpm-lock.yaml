@@ -2,6 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@bemedev/npm-publish': 0.0.1-pnpm2
+  '@bemedev/x-guard': ^0.1.0
   '@types/faker': ^6.6.9
   '@types/lodash.clonedeep': ^4.5.7
   '@typescript-eslint/eslint-plugin': ^5.46.1
@@ -31,6 +32,7 @@ specifiers:
   vitest: 0.25.2
 
 dependencies:
+  '@bemedev/x-guard': 0.1.0
   lodash.clonedeep: 4.5.0
 
 devDependencies:
@@ -92,6 +94,11 @@ packages:
       edit-json-file: 1.7.0
       shelljs: 0.8.5
     dev: true
+
+  /@bemedev/x-guard/0.1.0:
+    resolution: {integrity: sha512-qbnO3vXXcWxb1HSkrUJJP9a1lRGh7IuoLT++NI8sLuam3KW7W5qOgJ236vsvOBT4/v1BwEhhd2ofj2A5XRLlqg==}
+    engines: {node: '>=12'}
+    dev: false
 
   /@blakeembrey/deque/1.0.5:
     resolution: {integrity: sha512-6xnwtvp9DY1EINIKdTfvfeAtCYw4OqBZJhtiqkT3ivjnEfa25VQ3TsKvaFfKm8MyGIEfE95qLe+bNEt3nB0Ylg==}
