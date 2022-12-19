@@ -9,11 +9,4 @@ export {
 } from './helpers';
 export * from './interpret';
 export * from './machineFunction';
-export type {
-  Config,
-  GetTA,
-  GetTC,
-  Options,
-  StateFunction,
-  Transition,
-} from './types';
+export * from './types';
