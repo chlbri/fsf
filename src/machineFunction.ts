@@ -81,7 +81,7 @@ export class MachineFunction<
     return {
       _states: this.#states,
       initial: this.#initial,
-      context: this.#initialContext,
+      context: cloneDeep(this.#initialContext),
       overflow: this.#overflow,
       config: this.#config,
       options: this.#options,
