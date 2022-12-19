@@ -2,7 +2,7 @@ import cloneDeep from 'lodash.clonedeep';
 import { isFinalStateDefinition } from './helpers';
 import type { Config, Options, StateDefinition } from './types';
 
-type MarchineArgs<
+export type MarchineArgs<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
@@ -34,11 +34,11 @@ export class MachineFunction<
   #states: StateDefinition<TA, TC, R>[];
   #data: R | undefined;
   #initial: string;
-  #context: TC;
+  protected _context: TC;
   readonly #overflow: number;
   #config: Config<TA, TC, R>;
   #options?: Options<TA, TC, R>;
-  #currentState!: StateDefinition<TA, TC>;
+  protected _currentState!: StateDefinition<TA, TC>;
   #hasNext = true;
   readonly enteredStates: string[] = [];
 
@@ -65,7 +65,7 @@ export class MachineFunction<
     // #region Initialize props
     this.#states = _states;
     this.#initial = initial;
-    this.#context = context;
+    this._context = context;
     this.#overflow = overflow;
     this.#config = config;
     this.#options = options;
@@ -82,7 +82,7 @@ export class MachineFunction<
     return {
       _states: this.#states,
       initial: this.#initial,
-      context: this.#context,
+      context: this._context,
       overflow: this.#overflow,
       config: this.#config,
       options: this.#options,
@@ -93,18 +93,10 @@ export class MachineFunction<
   readonly cloneWithValues = (props?: Partial<MarchineArgs<TA, TC, R>>) =>
     new MachineFunction({ ...this.#props, ...props });
 
-  // readonly matches = (value: string) => this.#currentState.value === value;
-
   get clone() {
     const context = cloneDeep(this.#initialContext);
     return this.cloneWithValues({ context });
   }
-
-  // get cloneTest() {
-  //   const context = cloneDeep(this.#initialContext);
-  //   const test = true;
-  //   return this.cloneWithValues({ test, context });
-  // }
 
   protected _initializeStates = () => {
     const __allStates = this.#states;
@@ -114,43 +106,40 @@ export class MachineFunction<
     const findInitial = __allStates.find(
       state => state.value === initial,
     )!;
-    this.#currentState = findInitial;
-
-    // this.#test && this.enteredStates.push(this.#currentState.value);
+    this._currentState = findInitial;
   };
 
   protected _setCurrentState = (value: string) => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const out = this.#states.find(_state => _state.value === value)!;
-    this.#currentState = out;
-    // this.#test && this.enteredStates.push(out.value);
+    this._currentState = out;
   };
 
   #next = () => {
-    const current = { ...this.#currentState };
+    const current = { ...this._currentState };
     const events = this.#clonedEvents;
     if (isFinalStateDefinition(current)) {
-      current.entry.forEach(entry => entry(this.#context, events));
-      this.#data = current.data(this.#context, events);
+      current.entry.forEach(entry => entry(this._context, events));
+      this.#data = current.data(this._context, events);
       this.#hasNext = false;
     } else {
-      current.entry.forEach(entry => entry(this.#context, events));
+      current.entry.forEach(entry => entry(this._context, events));
 
       for (const transition of current.always) {
         const _cond = transition.cond;
         if (_cond) {
-          const check = _cond({ ...this.#context }, events);
+          const check = _cond({ ...this._context }, events);
           if (!check) continue;
         }
         transition.actions.forEach(action =>
-          action(this.#context, events),
+          action(this._context, events),
         );
 
         this._setCurrentState(transition.target);
         break;
       }
 
-      current.exit.forEach(entry => entry(this.#context, events));
+      current.exit.forEach(entry => entry(this._context, events));
     }
   };
 
@@ -165,7 +154,7 @@ export class MachineFunction<
   #rinit = (events?: TA) => {
     this.#events = events ?? this.#events ?? ({} as TA);
     this.#hasNext = true;
-    this.#context = cloneDeep(this.#initialContext);
+    this._context = cloneDeep(this.#initialContext);
     this._setCurrentState(this.#initial);
     return 0;
   };
