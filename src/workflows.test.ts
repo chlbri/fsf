@@ -179,11 +179,13 @@ describe('#4: Complex, https query builder', () => {
     url?: string;
   };
 
+  type Events = { products?: string[]; categories?: string[] };
+
   const queryMachine = createFunction(
     {
       schema: {
         context: {} as Context,
-        events: {} as { products?: string[]; categories?: string[] },
+        events: {} as Events,
         data: {} as string,
       },
       context: {},
