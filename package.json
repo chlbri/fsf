@@ -1,6 +1,6 @@
 {
   "name": "@bemedev/fsf",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "A libray for finite state functions",
   "author": {
     "name": "chlbri",
