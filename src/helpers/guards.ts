@@ -1,5 +1,5 @@
 import type { GuardDefs, GuardDefUnion } from '@bemedev/x-guard';
-import { Guards, GuardUnion, Options } from 'src/types';
+import { Guards, GuardUnion, Options } from '../types';
 import { returnTrue } from './functions';
 
 function assignGuardsUnion<TA = any, TC extends object = object, R = any>(
