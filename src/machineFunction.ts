@@ -16,7 +16,6 @@ export type MarchineArgs<
   // test?: boolean;
 };
 
-//TODO: Create a test library
 /**
  * @class Class representing a machine function
  *
