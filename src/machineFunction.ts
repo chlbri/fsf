@@ -68,29 +68,33 @@ export class MachineFunction<
     this.#overflow = overflow;
     this.#config = config;
     this.#options = options;
-    // this.#test = test;
-
     // #endregion
 
     this.#initialContext = cloneDeep(context);
-    Object.freeze(this.#initialContext);
     this._initializeStates();
   }
 
-  get #props() {
+  /**
+   * Use internally to get the props
+   */
+  get __props(): MarchineArgs<TA, TC, R> {
     return {
       _states: this.#states,
       initial: this.#initial,
-      context: this._context,
+      context: this.#initialContext,
       overflow: this.#overflow,
       config: this.#config,
       options: this.#options,
-      // test: this.#test,
     };
   }
 
+  //ignore coverage
+  get props(): MarchineArgs<TA, TC, R> {
+    return Object.freeze(this.__props);
+  }
+
   readonly cloneWithValues = (props?: Partial<MarchineArgs<TA, TC, R>>) =>
-    new MachineFunction({ ...this.#props, ...props });
+    new MachineFunction({ ...this.__props, ...props });
 
   get clone() {
     const context = cloneDeep(this.#initialContext);
@@ -98,6 +102,7 @@ export class MachineFunction<
   }
 
   protected _initializeStates = () => {
+    Object.freeze(this.#initialContext);
     const __allStates = this.#states;
     const initial = this.#initial;
 
