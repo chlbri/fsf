@@ -241,7 +241,7 @@ describe('#4: Complex, https query builder', () => {
         },
         setProducts: (ctx, { products }) => {
           const _products = products?.join(',');
-          ctx.url += `&categories=${_products}`;
+          ctx.url += `&products=${_products}`;
         },
       },
       guards: {
@@ -270,13 +270,13 @@ describe('#4: Complex, https query builder', () => {
 
   test('#3: products', () => {
     expect(func({ products: ['a', 'b'] })).toBe(
-      'https://example.com?apikey=123&categories=a,b',
+      'https://example.com?apikey=123&products=a,b',
     );
   });
 
   test('#4: categories and products', () => {
     expect(func({ products: ['a', 'b'], categories: ['c', 'd'] })).toBe(
-      'https://example.com?apikey=123&categories=c,d&categories=a,b',
+      'https://example.com?apikey=123&categories=c,d&products=a,b',
     );
   });
 });
