@@ -1,5 +1,3 @@
-import type { MachineFunction } from './machineFunction';
-
 /* eslint-disable @typescript-eslint/ban-types */
 export type StateFunction<TC = any, TA = any, R = any> = (
   context: TC,
@@ -104,16 +102,3 @@ export type Options<TA = any, TC = any, R = any> = {
   overflow?: number;
   strict?: boolean;
 };
-
-export type GetTA<T extends MachineFunction> = T extends MachineFunction<
-  infer U
->
-  ? U
-  : never;
-
-export type GetTC<T extends MachineFunction> = T extends MachineFunction<
-  any,
-  infer U
->
-  ? U
-  : never;

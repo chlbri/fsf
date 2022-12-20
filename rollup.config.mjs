@@ -1,63 +1,40 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
+import { minify } from 'rollup-plugin-esbuild';
+import typescript from 'rollup-plugin-typescript2';
 
-import dts from 'rollup-plugin-dts';
-import esbuild from 'rollup-plugin-esbuild';
-import { terser } from 'rollup-plugin-terser';
-import tsConfigPaths from 'rollup-plugin-tsconfig-paths';
-
-/** @type {(value: string) => import('rollup').RollupOptions} */
-const bundleDts = value => ({
-  input: `src/${value}.ts`,
-  external: id => !/^[./]/.test(id),
-  plugins: [dts()],
-  output: {
-    format: 'es',
-    file: `lib/${value}.d.ts`,
-  },
+/**
+ *
+ * @returns {import('rollup').RollupOptions}
+ */
+const bundleDts = () => ({
+  input: 'src/index.ts',
+  plugins: [typescript(), minify()],
+  external: ['@bemedev/x-guard', 'lodash.clonedeep'],
+  output: [
+    {
+      format: 'es',
+      file: 'lib/index.d.ts',
+    },
+    {
+      format: 'cjs',
+      sourcemap: 'inline',
+      dir: `lib`,
+      preserveModulesRoot: 'src',
+      preserveModules: true,
+      entryFileNames: '[name].js',
+      exports: 'named',
+    },
+    {
+      format: 'es',
+      sourcemap: 'inline',
+      dir: `lib`,
+      preserveModulesRoot: 'src',
+      preserveModules: true,
+      entryFileNames: '[name].mjs',
+      exports: 'named',
+    },
+  ],
 });
 
-/** @type {(value: string) => import('rollup').RollupOptions} */
-const bundleJS = value => {
-  return {
-    input: `src/${value}.ts`,
-    external: ['lodash.clonedeep', '@bemedev/x-guard'],
-    plugins: [esbuild(), terser({}), tsConfigPaths()],
-    output: [
-      {
-        format: 'cjs',
-        sourcemap: true,
-        dir: `lib`,
-        preserveModulesRoot: 'src',
-        preserveModules: true,
-        entryFileNames: '[name].js',
-        exports: 'named',
-      },
-      {
-        format: 'es',
-        sourcemap: true,
-        dir: `lib`,
-        preserveModulesRoot: 'src',
-        preserveModules: true,
-        entryFileNames: '[name].mjs',
-        exports: 'named',
-      },
-    ],
-  };
-};
-
-/** @type {(...values: string[]) => import('rollup').RollupOptions[]} */
-const bundles = (...values) => {
-  const types = values.map(bundleDts);
-  const jss = values.map(bundleJS);
-  const out = [...types, ...jss];
-  return out;
-};
-
-const config = bundles(
-  'helpers/index',
-  'index',
-  'createFunction',
-  'interpret',
-);
+const config = bundleDts();
 
 export default config;
