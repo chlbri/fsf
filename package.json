@@ -1,6 +1,6 @@
 {
   "name": "@bemedev/fsf",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "A libray for finite state functions",
   "author": {
     "name": "chlbri",
@@ -82,7 +82,7 @@
   },
   "repository": "https://github.com/chlbri/fstate.git",
   "dependencies": {
-    "@bemedev/x-guard": "^0.1.0",
+    "@bemedev/x-guard": "^0.1.1",
     "lodash.clonedeep": "^4.5.0"
   }
 }
