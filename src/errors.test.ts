@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import createFunction from './createFunction';
+import { createFunction } from './createFunction';
 import { interpret } from './interpret';
 
 test('#1: Overflow transitions', () => {

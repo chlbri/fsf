@@ -1,4 +1,4 @@
-export { default } from './createFunction';
+export * from './createFunction';
 export {
   assignGuards,
   identity,

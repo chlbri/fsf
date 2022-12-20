@@ -1,6 +1,6 @@
 {
   "name": "@bemedev/fsf",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A libray for finite state functions",
   "author": {
     "name": "chlbri",
@@ -34,7 +34,8 @@
     "prepare": "husky install",
     "updateDependencies": "pnpm update --latest",
     "build": "rm -rf lib && pnpm run rollup ",
-    "test": "pnpm run build && vitest run --passWithNoTests",
+    "test:only": "vitest run --passWithNoTests",
+    "test": "pnpm run prepublishOnly && pnpm run test:only",
     "test:watch": "vitest --passWithNoTests",
     "remove": "rm -rf node_modules pnpm-lock.yaml",
     "clean": "pnpm run remove && pnpm run config",
@@ -42,7 +43,7 @@
     "eslint": "eslint \"{src/**/*,App}.{ts,tsx}\"",
     "lint": "pnpm run prettier && pnpm run eslint --fix",
     "lint-watch": "onchange --await-write-finish 5500 \"**/*\" -- pnpm run lint",
-    "prepublishOnly": "pnpm run build",
+    "prepublishOnly": "pnpm run lint && pnpm run build",
     "p-q": "pretty-quick --staged --pattern \"**/*.*(ts|tsx)\""
   },
   "devDependencies": {
@@ -68,7 +69,7 @@
   },
   "repository": "https://github.com/chlbri/fstate.git",
   "dependencies": {
-    "@bemedev/x-guard": "^0.1.1",
+    "@bemedev/x-guard": "^0.2.0",
     "lodash.clonedeep": "^4.5.0"
   }
 }

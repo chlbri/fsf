@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import createFunction from '../lib/createFunction';
+import { createFunction } from '../lib/createFunction';
 
 const config = {
   schema: {

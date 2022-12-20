@@ -1,11 +1,8 @@
 import { expect, test } from 'vitest';
-import { createFunction } from './createFunction';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { createFunction } = require('../lib/index.js');
 
 const config = {
-  schema: {
-    context: {} as { val: number },
-    events: {} as number,
-  },
   context: { val: 4 },
   initial: 'idle',
   states: {
