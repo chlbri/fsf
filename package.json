@@ -4,7 +4,7 @@
   "description": "A libray for finite state functions",
   "author": {
     "name": "chlbri",
-    "email": "bri_lviu@icloud.com",
+    "email": "bri_lvi@icloud.com",
     "url": "https://bemedev.vercel.app"
   },
   "main": "lib/index.js",
