@@ -16,21 +16,19 @@ const bundleDts = () => ({
     },
     {
       format: 'cjs',
-      sourcemap: 'inline',
+      sourcemap: true,
       dir: `lib`,
       preserveModulesRoot: 'src',
       preserveModules: true,
       entryFileNames: '[name].js',
-      exports: 'named',
     },
     {
       format: 'es',
-      sourcemap: 'inline',
+      sourcemap: true,
       dir: `lib`,
       preserveModulesRoot: 'src',
       preserveModules: true,
       entryFileNames: '[name].mjs',
-      exports: 'named',
     },
   ],
 });

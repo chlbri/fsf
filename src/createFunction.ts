@@ -7,7 +7,7 @@ import {
 import { MachineFunction } from './machineFunction';
 import type { Config, Options, StateDefinition } from './types';
 
-export default function createFunction<
+export function createFunction<
   TA = undefined,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,

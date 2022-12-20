@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import createFunction from '../lib/createFunction';
+import { createFunction } from '../lib/createFunction';
 import { interpret } from '../lib/interpret';
 
 describe('#1: explicit returns, (tidious guards)', () => {

@@ -1,15 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import { createFunction } from './createFunction';
-import { interpret } from './interpret';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { createFunction, interpret } = require('../lib/index.js');
 
 describe('#1: explicit returns, (tidious guards)', () => {
   const machine = createFunction(
     {
-      schema: {
-        context: {} as { val: number },
-        events: {} as number,
-        data: {} as number,
-      },
       context: { val: 4 },
       initial: 'idle',
       states: {
@@ -66,10 +62,6 @@ describe('#1: explicit returns, (tidious guards)', () => {
 describe('#2: no explicit returns, (tidious actions)', () => {
   const func = createFunction(
     {
-      schema: {
-        context: {} as { val: number },
-        events: {} as number,
-      },
       context: { val: 4 },
       initial: 'idle',
       states: {
@@ -112,10 +104,6 @@ describe('#2: no explicit returns, (tidious actions)', () => {
 describe('#3: With guards and entry', () => {
   const machine = createFunction(
     {
-      schema: {
-        context: {} as { val: number },
-        events: {} as number,
-      },
       context: { val: 4 },
       initial: 'idle',
       states: {
@@ -173,21 +161,8 @@ describe('#3: With guards and entry', () => {
 });
 
 describe('#4: Complex, https query builder', () => {
-  type Context = {
-    apiKey?: string;
-    apiUrl?: string;
-    url?: string;
-  };
-
-  type Events = { products?: string[]; categories?: string[] };
-
   const queryMachine = createFunction(
     {
-      schema: {
-        context: {} as Context,
-        events: {} as Events,
-        data: {} as string,
-      },
       context: {},
       initial: 'preferences',
       states: {

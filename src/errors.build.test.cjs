@@ -1,15 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import { createFunction } from '../lib/createFunction';
-import { interpret } from '../lib/interpret';
+import { interpret } from '../lib/index.js';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { createFunction } = require('../lib/index.js');
 
 test('#1: Overflow transitions', () => {
   const machine = createFunction(
     {
-      schema: {
-        context: {} as { val: number },
-        events: {} as number,
-        data: {} as number,
-      },
       context: { val: 4 },
       initial: 'idle',
       states: {
@@ -43,11 +39,6 @@ describe('#2: State final is not defined', () => {
   test('String', () => {
     const machine = () =>
       createFunction({
-        schema: {
-          context: {} as { val: number },
-          events: {} as number,
-          data: {} as number,
-        },
         context: { val: 4 },
         initial: 'idle',
         states: {
@@ -67,11 +58,6 @@ describe('#2: State final is not defined', () => {
   test('Object', () => {
     const machine = () =>
       createFunction({
-        schema: {
-          context: {} as { val: number },
-          events: {} as number,
-          data: {} as number,
-        },
         context: { val: 4 },
         initial: 'idle',
         states: {
@@ -97,11 +83,6 @@ describe('#2: State final is not defined', () => {
 test('#3: No initial state', () => {
   const machine = () =>
     createFunction({
-      schema: {
-        context: {} as { val: number },
-        events: {} as number,
-        data: {} as number,
-      },
       context: { val: 4 },
       initial: 'idle2',
       states: {
@@ -121,11 +102,6 @@ test('#3: No initial state', () => {
 test('#4: No states', () => {
   const machine = () =>
     createFunction({
-      schema: {
-        context: {} as { val: number },
-        events: {} as number,
-        data: {} as number,
-      },
       context: { val: 4 },
       initial: 'idle',
       states: {},
@@ -137,11 +113,6 @@ describe('#5: Cannot transit to himself', () => {
   test('String', () => {
     const machine = () =>
       createFunction({
-        schema: {
-          context: {} as { val: number },
-          events: {} as number,
-          data: {} as number,
-        },
         context: { val: 4 },
         initial: 'idle',
         states: {
@@ -155,11 +126,6 @@ describe('#5: Cannot transit to himself', () => {
   test('Object', () => {
     const machine = () =>
       createFunction({
-        schema: {
-          context: {} as { val: number },
-          events: {} as number,
-          data: {} as number,
-        },
         context: { val: 4 },
         initial: 'idle',
         states: {
@@ -179,11 +145,6 @@ describe('#6: Strict errors', () => {
     const machine = () =>
       createFunction(
         {
-          schema: {
-            context: {} as { val: number },
-            events: {} as number,
-            data: {} as number,
-          },
           context: { val: 4 },
           initial: 'idle',
           states: {
@@ -207,11 +168,6 @@ describe('#6: Strict errors', () => {
     const machine = () =>
       createFunction(
         {
-          schema: {
-            context: {} as { val: number },
-            events: {} as number,
-            data: {} as number,
-          },
           context: { val: 4 },
           initial: 'idle',
           states: {
@@ -235,11 +191,6 @@ describe('#6: Strict errors', () => {
     const machine = () =>
       createFunction(
         {
-          schema: {
-            context: {} as { val: number },
-            events: {} as number,
-            data: {} as number,
-          },
           context: { val: 4 },
           initial: 'idle',
           states: {
@@ -263,11 +214,6 @@ describe('#6: Strict errors', () => {
     const machine = () =>
       createFunction(
         {
-          schema: {
-            context: {} as { val: number },
-            events: {} as number,
-            data: {} as number,
-          },
           context: { val: 4 },
           initial: 'idle',
           states: {

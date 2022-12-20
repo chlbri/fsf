@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@babel/core': ^7.20.5
-  '@bemedev/x-guard': ^0.1.1
+  '@bemedev/x-guard': ^0.2.0
   '@types/lodash.clonedeep': ^4.5.7
   '@typescript-eslint/eslint-plugin': ^5.46.1
   '@typescript-eslint/parser': ^5.46.1
@@ -24,7 +24,7 @@ specifiers:
   vitest: 0.25.2
 
 dependencies:
-  '@bemedev/x-guard': 0.1.1
+  '@bemedev/x-guard': 0.2.0
   lodash.clonedeep: 4.5.0
 
 devDependencies:
@@ -251,8 +251,8 @@ packages:
       to-fast-properties: 2.0.0
     dev: true
 
-  /@bemedev/x-guard/0.1.1:
-    resolution: {integrity: sha512-OLs6966Yk3AlVdoaTvQj5m1ornaJDApMv2B2TYlWatvefPtHmlOklfhvXC5Z5k79lTuniYhSyaRfdRIlT2fUTQ==}
+  /@bemedev/x-guard/0.2.0:
+    resolution: {integrity: sha512-BrQBlnHApofNWLTqyenTtddvHMBMdKP+IA7e3XSKOcRxz3WUphnahWmWNUxlevxKzvimUs5BFbutDVme8imjDw==}
     engines: {node: '>=12'}
     dev: false
 
