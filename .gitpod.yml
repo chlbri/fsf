@@ -4,7 +4,7 @@
 tasks:
   - name: Configuration
     before: npm install -g ts-node
-    command: yarn run build
+    command: pnpm install
 
 vscode:
   extensions:
