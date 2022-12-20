@@ -1,3 +1,4 @@
+import babel from '@rollup/plugin-babel';
 import tsConfigPaths from 'rollup-plugin-tsconfig-paths';
 import typescript from 'rollup-plugin-typescript2';
 
@@ -7,7 +8,18 @@ import typescript from 'rollup-plugin-typescript2';
  */
 const bundleDts = () => ({
   input: 'src/index.ts',
-  plugins: [typescript(), tsConfigPaths()],
+  plugins: [
+    typescript(),
+    tsConfigPaths(),
+    babel({
+      babelrc: false,
+      configFile: false,
+      skipPreflightCheck: true,
+      babelHelpers: 'inline',
+      extensions: ['.ts', '.tsx', '.js'],
+      plugins: ['babel-plugin-annotate-pure-calls'],
+    }),
+  ],
   external: ['@bemedev/x-guard', 'lodash.clonedeep'],
   output: [
     {
