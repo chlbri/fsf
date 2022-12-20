@@ -1,6 +1,4 @@
-import commonjs from '@rollup/plugin-commonjs';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import { minify } from 'rollup-plugin-esbuild';
+import tsConfigPaths from 'rollup-plugin-tsconfig-paths';
 import typescript from 'rollup-plugin-typescript2';
 
 /**
@@ -9,7 +7,7 @@ import typescript from 'rollup-plugin-typescript2';
  */
 const bundleDts = () => ({
   input: 'src/index.ts',
-  plugins: [typescript(), minify(), nodeResolve(), commonjs()],
+  plugins: [typescript(), tsConfigPaths()],
   external: ['@bemedev/x-guard', 'lodash.clonedeep'],
   output: [
     {
