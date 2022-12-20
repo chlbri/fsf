@@ -101,7 +101,7 @@ export class MachineFunction<
     return this.cloneWithValues({ context });
   }
 
-  protected _initializeStates = () => {
+  protected readonly _initializeStates = () => {
     Object.freeze(this.#initialContext);
     const __allStates = this.#states;
     const initial = this.#initial;
@@ -113,7 +113,7 @@ export class MachineFunction<
     this._currentState = findInitial;
   };
 
-  protected _setCurrentState = (value: string) => {
+  protected readonly _setCurrentState = (value: string) => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const out = this.#states.find(_state => _state.value === value)!;
     this._currentState = out;
