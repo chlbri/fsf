@@ -1,7 +1,9 @@
+export type Undy<T> = T extends null ? Exclude<T, null> | undefined : T;
+
 /* eslint-disable @typescript-eslint/ban-types */
 export type StateFunction<TC = any, TA = any, R = any> = (
   context: TC,
-  events: TA,
+  events: Undy<TA>,
 ) => R;
 
 export type SingleOrArray<T> = T | T[];
@@ -86,10 +88,10 @@ export type State = SimpleState | FinalState;
 export type Config<TA = any, TC = any, R = TC> = {
   context: TC;
   initial: string;
-  schema?: {
+  schema: {
     context?: TC;
     events?: TA;
-    data?: R;
+    data: R;
   };
   data?: string;
   states: Record<string, State>;
@@ -102,3 +104,7 @@ export type Options<TA = any, TC = any, R = any> = {
   overflow?: number;
   strict?: boolean;
 };
+
+export type Primitives = string | number | boolean;
+
+export type Param<T> = T extends null ? [Exclude<T, null>?] : [T];

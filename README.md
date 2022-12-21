@@ -97,8 +97,7 @@ pnpm add @bemedev/fsf
 
 ```ts
 import { describe, expect, test } from 'vitest';
-import createFunction from './createFunction';
-import { interpret } from './interpret';
+import { createLogic, interpret } from '@bemedev/fsf';
 
 describe('#4: Complex, https query builder', () => {
   type Context = {
@@ -210,4 +209,4 @@ describe('#4: Complex, https query builder', () => {
 });
 ```
 
-**NB**: _Please don't use version under 0.3.4_
+### **NB**: Please don't use version under 0.6.0, it's not stable.

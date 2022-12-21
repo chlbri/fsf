@@ -47,7 +47,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Test
-        run: pnpm run test
+        run: pnpm run build:test
 
   # clean:
   #   runs-on: ubuntu-latest

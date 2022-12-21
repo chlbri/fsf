@@ -1,6 +1,6 @@
 {
   "name": "@bemedev/fsf",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A libray for finite state functions",
   "author": {
     "name": "chlbri",
@@ -11,18 +11,9 @@
   "typings": "lib/index.d.ts",
   "module": "lib/index.mjs",
   "keywords": [
-    "statechart",
-    "nodejs",
-    "typescript",
-    "javascript",
     "fsm",
-    "finite-state-machine",
     "if",
-    "context",
-    "data",
-    "server",
-    "statechart machine",
-    "machine"
+    "state machine"
   ],
   "files": [
     "lib"
@@ -34,8 +25,8 @@
     "prepare": "husky install",
     "updateDependencies": "pnpm update --latest",
     "build": "rm -rf lib && pnpm run rollup ",
-    "test:only": "vitest run --passWithNoTests",
-    "test": "pnpm run prepublishOnly && pnpm run test:only",
+    "test": "vitest run --passWithNoTests",
+    "build:test": "pnpm run prepublishOnly && pnpm run test",
     "test:watch": "vitest --passWithNoTests",
     "remove": "rm -rf node_modules pnpm-lock.yaml",
     "clean": "pnpm run remove && pnpm run config",
@@ -47,8 +38,6 @@
     "p-q": "pretty-quick --staged --pattern \"**/*.*(ts|tsx)\""
   },
   "devDependencies": {
-    "@babel/core": "^7.20.5",
-    "@types/lodash.clonedeep": "^4.5.7",
     "@typescript-eslint/eslint-plugin": "^5.46.1",
     "@typescript-eslint/parser": "^5.46.1",
     "eslint": "^8.29.0",
@@ -70,6 +59,6 @@
   "repository": "https://github.com/chlbri/fstate.git",
   "dependencies": {
     "@bemedev/x-guard": "^0.2.0",
-    "lodash.clonedeep": "^4.5.0"
+    "deepmerge": "^4.2.2"
   }
 }

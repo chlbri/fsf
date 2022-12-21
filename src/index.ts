@@ -1,6 +1,5 @@
-export * from './createFunction';
+export * from './createLogic';
 export {
-  assignGuards,
   identity,
   isFinalState,
   return0,
@@ -8,5 +7,6 @@ export {
   voidNothing,
 } from './helpers';
 export * from './interpret';
-export * from './machineFunction';
+export * from './Interpreter';
+export * from './Machine';
 export * from './types';
