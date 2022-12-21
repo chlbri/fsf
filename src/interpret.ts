@@ -1,10 +1,11 @@
-import { MachineFunction } from './machineFunction';
+import { Interpreter, InterpreterOptions } from './Interpreter';
+import { Machine } from './Machine';
 
 export function interpret<
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
->(machine: MachineFunction<TA, TC, R>) {
-  const _machine = machine.clone;
-  return _machine.start;
+>(machine: Machine<TA, TC, R>, options?: InterpreterOptions) {
+  const interpreter = new Interpreter(machine, options);
+  return interpreter.build;
 }

@@ -1,48 +1,41 @@
 import { describe, expect, test } from 'vitest';
-import { createFunction } from '../lib/createFunction';
-import { interpret } from '../lib/interpret';
+import { createLogic, interpret } from '../lib';
 
 test('#1: Overflow transitions', () => {
-  const machine = createFunction(
-    {
-      schema: {
-        context: {} as { val: number },
-        events: {} as number,
-        data: {} as number,
+  const machine = createLogic({
+    schema: {
+      context: {} as { val: number },
+      events: {} as number,
+      data: {} as number,
+    },
+    context: { val: 4 },
+    initial: 'idle',
+    states: {
+      idle: {
+        always: {
+          target: 'calc',
+        },
       },
-      context: { val: 4 },
-      initial: 'idle',
-      states: {
-        idle: {
-          always: {
-            target: 'calc',
+      calc: {
+        always: [
+          {
+            target: 'final',
           },
-        },
-        calc: {
-          always: [
-            {
-              target: 'final',
-              actions: ['action'],
-            },
-          ],
-        },
-        final: {
-          data: 'any',
-        },
+        ],
+      },
+      final: {
+        data: 'any',
       },
     },
-    {
-      overflow: 0,
-    },
-  );
-  const func = () => interpret(machine)(3);
+  });
+  const func = () => interpret(machine, { overflow: 0 })(3);
   expect(func).toThrowError('Overflow transitions');
 });
 
 describe('#2: State final is not defined', () => {
   test('String', () => {
     const machine = () =>
-      createFunction({
+      createLogic({
         schema: {
           context: {} as { val: number },
           events: {} as number,
@@ -60,13 +53,13 @@ describe('#2: State final is not defined', () => {
             always: 'final',
           },
         },
-      });
+      }).safe;
     expect(machine).toThrowError('State final is not defined');
   });
 
   test('Object', () => {
     const machine = () =>
-      createFunction({
+      createLogic({
         schema: {
           context: {} as { val: number },
           events: {} as number,
@@ -89,14 +82,14 @@ describe('#2: State final is not defined', () => {
             ],
           },
         },
-      });
+      }).safe;
     expect(machine).toThrowError('State final is not defined');
   });
 });
 
 test('#3: No initial state', () => {
   const machine = () =>
-    createFunction({
+    createLogic({
       schema: {
         context: {} as { val: number },
         events: {} as number,
@@ -114,13 +107,13 @@ test('#3: No initial state', () => {
           data: 'val',
         },
       },
-    });
+    }).safe;
   expect(machine).toThrowError('No initial state');
 });
 
 test('#4: No states', () => {
   const machine = () =>
-    createFunction({
+    createLogic({
       schema: {
         context: {} as { val: number },
         events: {} as number,
@@ -129,14 +122,14 @@ test('#4: No states', () => {
       context: { val: 4 },
       initial: 'idle',
       states: {},
-    });
+    }).safe;
   expect(machine).toThrowError('No states');
 });
 
 describe('#5: Cannot transit to himself', () => {
   test('String', () => {
     const machine = () =>
-      createFunction({
+      createLogic({
         schema: {
           context: {} as { val: number },
           events: {} as number,
@@ -149,12 +142,12 @@ describe('#5: Cannot transit to himself', () => {
             always: 'idle',
           },
         },
-      });
+      }).safe;
     expect(machine).toThrowError('Cannot transit to himself : idle');
   });
   test('Object', () => {
     const machine = () =>
-      createFunction({
+      createLogic({
         schema: {
           context: {} as { val: number },
           events: {} as number,
@@ -169,7 +162,7 @@ describe('#5: Cannot transit to himself', () => {
             },
           },
         },
-      });
+      }).safe;
     expect(machine).toThrowError('Cannot transit to himself : idle');
   });
 });
@@ -177,91 +170,82 @@ describe('#5: Cannot transit to himself', () => {
 describe('#6: Strict errors', () => {
   test('#1: transition actions string', () => {
     const machine = () =>
-      createFunction(
-        {
-          schema: {
-            context: {} as { val: number },
-            events: {} as number,
-            data: {} as number,
+      createLogic({
+        schema: {
+          context: {} as { val: number },
+          events: {} as number,
+          data: {} as number,
+        },
+        context: { val: 4 },
+        initial: 'idle',
+        states: {
+          idle: {
+            always: {
+              target: 'any',
+              actions: 'action',
+            },
           },
-          context: { val: 4 },
-          initial: 'idle',
-          states: {
-            idle: {
-              always: {
-                target: 'any',
-                actions: 'action',
-              },
-            },
-            any: {
-              data: 'any',
-            },
+          any: {
+            data: 'any',
           },
         },
-        { strict: true },
-      );
+      }).safe;
     expect(machine).toThrowError('Action action is not provided');
   });
 
   test('#2: transition actions array', () => {
     const machine = () =>
-      createFunction(
-        {
-          schema: {
-            context: {} as { val: number },
-            events: {} as number,
-            data: {} as number,
+      createLogic({
+        schema: {
+          context: {} as { val: number },
+          events: {} as number,
+          data: {} as number,
+        },
+        context: { val: 4 },
+        initial: 'idle',
+        states: {
+          idle: {
+            always: {
+              target: 'any',
+              actions: ['action'],
+            },
           },
-          context: { val: 4 },
-          initial: 'idle',
-          states: {
-            idle: {
-              always: {
-                target: 'any',
-                actions: ['action'],
-              },
-            },
-            any: {
-              data: 'any',
-            },
+          any: {
+            data: 'any',
           },
         },
-        { strict: true },
-      );
+      }).safe;
     expect(machine).toThrowError('Action action is not provided');
   });
 
   test('#3: No guards provided', () => {
     const machine = () =>
-      createFunction(
-        {
-          schema: {
-            context: {} as { val: number },
-            events: {} as number,
-            data: {} as number,
+      createLogic({
+        schema: {
+          context: {} as { val: number },
+          events: {} as number,
+          data: {} as number,
+        },
+        context: { val: 4 },
+        initial: 'idle',
+        states: {
+          idle: {
+            always: {
+              target: 'any',
+              cond: 'cond',
+            },
           },
-          context: { val: 4 },
-          initial: 'idle',
-          states: {
-            idle: {
-              always: {
-                target: 'any',
-                cond: 'cond',
-              },
-            },
-            any: {
-              data: 'any',
-            },
+          any: {
+            data: 'any',
           },
         },
-        { strict: true },
-      );
+      }).safe;
     expect(machine).toThrowError('No guards provided');
   });
 
   test('#4: transition guards string', () => {
     const machine = () =>
-      createFunction(
+      createLogic(
         {
           schema: {
             context: {} as { val: number },
@@ -282,8 +266,8 @@ describe('#6: Strict errors', () => {
             },
           },
         },
-        { strict: true, guards: {} },
-      );
+        { guards: {} },
+      ).safe;
     expect(machine).toThrowError('Guard "cond" is not provided');
   });
 });

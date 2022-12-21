@@ -1,10 +1,12 @@
 import { expect, test } from 'vitest';
-import { createFunction } from '../lib/createFunction';
+import { createLogic } from '../lib';
 
+// #region Preparation
 const config = {
   schema: {
     context: {} as { val: number },
     events: {} as number,
+    data: {} as number,
   },
   context: { val: 4 },
   initial: 'idle',
@@ -38,7 +40,8 @@ const config = {
 };
 
 const options = {};
-const machine = createFunction(config, options);
+const machine = createLogic(config, options);
+// #endregion
 
 test('Config', () => {
   expect(machine.__config).toEqual(config);

@@ -8,7 +8,7 @@ import typescript from 'rollup-plugin-typescript2';
 const bundleDts = () => ({
   input: 'src/index.ts',
   plugins: [typescript(), tsConfigPaths()],
-  external: ['@bemedev/x-guard', 'lodash.clonedeep'],
+  external: ['@bemedev/x-guard', 'deepmerge'],
   output: [
     {
       format: 'es',
