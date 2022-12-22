@@ -113,7 +113,8 @@ describe('#4: Complex, https query builder', () => {
     {
       schema: {
         context: {} as Context,
-        events: {} as Events,
+        // Add null option to make arguments optionals
+        events: {} as Events | null,
         data: {} as string,
       },
       context: {},
@@ -186,9 +187,8 @@ describe('#4: Complex, https query builder', () => {
 
   const func = interpret(queryMachine);
 
-  // The arguments are the events
-  // and they are optionals
   test('#1: no args', () => {
+    // So here, arguments are optionals ! 
     expect(func()).toBe('https://example.com?apikey=123');
   });
 
