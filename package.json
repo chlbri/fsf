@@ -1,7 +1,7 @@
 {
   "name": "@bemedev/fsf",
-  "version": "0.6.0",
-  "description": "A libray for finite state functions",
+  "version": "0.6.1",
+  "description": "A library for finite state functions",
   "author": {
     "name": "chlbri",
     "email": "bri_lvi@icloud.com",
@@ -16,7 +16,8 @@
     "state machine"
   ],
   "files": [
-    "lib"
+    "lib",
+    "public"
   ],
   "license": "MIT",
   "scripts": {
