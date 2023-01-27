@@ -11,7 +11,7 @@ as Uncle BoB says
 State machines are a useful concept in computer science and programming,
 and are often used to model the behavior of systems. In this journey, I
 explore this new way of programming to answer questions like what state
-machines are, how they work, how can I implement htem in my workflow.
+machines are, how they work, how can I implement them in my workflow.
 
 A state machine is a mathematical model of computation that represents the
 behavior of a system as a sequence of states and transitions between those
@@ -188,7 +188,7 @@ describe('#4: Complex, https query builder', () => {
   const func = interpret(queryMachine);
 
   test('#1: no args', () => {
-    // So here, arguments are optionals ! 
+    // So here, arguments are optionals !
     expect(func()).toBe('https://example.com?apikey=123');
   });
 

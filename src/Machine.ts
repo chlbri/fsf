@@ -38,6 +38,7 @@ export class Machine<
   #config: Config<TA, TC, R>;
   #options?: Options<TA, TC, R>;
   #errors: string[] = [];
+  #unFreezeArgs: boolean;
 
   // #endregion
 
@@ -279,6 +280,7 @@ export class Machine<
     this.#initial = config.initial;
     this.#config = config;
     this.#options = options;
+    this.#unFreezeArgs = options?.unFreezeArgs ?? false;
     // #endregion
     this.#initialContext = JSON.stringify(config.context);
   }
@@ -342,7 +344,10 @@ export class Machine<
   }) => {
     const current = this.#searchState(state);
     let data: R | undefined = undefined;
-    const _events = Object.freeze(events) as any;
+    const _events = this.#unFreezeArgs
+      ? events
+      : (Object.freeze(events) as any);
+
     let hasNext = true;
     if (isFinalStateDefinition(current)) {
       current.entry.forEach(entry => entry(context, _events));

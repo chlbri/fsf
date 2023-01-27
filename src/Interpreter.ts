@@ -44,6 +44,10 @@ export class Interpreter<
     return this.#errors;
   }
 
+  get initialContext() {
+    return this.#initialContext;
+  }
+
   protected readonly _initializeStates = () => {
     Object.freeze(this.#initialContext);
     this._context = this.#parseContext();

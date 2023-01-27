@@ -14,5 +14,6 @@ module.exports = function (_wallaby) {
       // or /istanbul ignore next/, or any RegExp
       ignoreCoverage: /ignore coverage/,
     },
+    filesWithNoCoverageCalculated: ['lib/**/**'],
   };
 };
