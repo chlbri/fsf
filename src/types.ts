@@ -103,6 +103,7 @@ export type Options<TA = any, TC = any, R = any> = {
   datas?: Record<string, StateFunction<TC, TA, R>>;
   overflow?: number;
   strict?: boolean;
+  unFreezeArgs?: boolean;
 };
 
 export type Primitives = string | number | boolean;
