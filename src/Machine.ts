@@ -1,12 +1,21 @@
 import reduceGuards, { GuardDefs, GuardDefUnion } from '@bemedev/x-guard';
 import merge from 'deepmerge';
-import { identity, isFinalState, isFinalStateDefinition } from './helpers';
+import {
+  identity,
+  isFinalState,
+  isFinalStateDefinition,
+  isPromiseState,
+  isPromiseStateDefinition,
+  isSimpleStateDefinition,
+} from './helpers';
 import type {
   CloneArgs,
   ExtractFunction,
   ExtractFunctionProps,
   MarchineArgs,
   NextFunction,
+  NextFunctionAsync,
+  PropsExtractorPromise,
   PropsExtractorTransition,
 } from './Machine.types';
 import type {
@@ -15,6 +24,7 @@ import type {
   GuardUnion,
   Options,
   SAS,
+  SRCDefinition,
   StateDefinition,
   StateFunction,
   TransitionDefinition,
@@ -177,6 +187,7 @@ export class Machine<
           target,
         };
       }
+
       const target = transition.target;
       const check = __keys.includes(target);
       if (!check) {
@@ -225,6 +236,74 @@ export class Machine<
     return functions;
   };
 
+  #extractPromise = <R>(
+    value: string,
+    promises?: Options<TA, TC, R>['promises'],
+  ): StateFunction<TC, TA, Promise<R>> | undefined => {
+    const action = promises?.[value];
+    if (!action) {
+      this.#errors.push(`Promise ${value} is not provided`);
+    }
+
+    return action;
+  };
+
+  #extractPromises<R = any>({
+    source,
+    __keys,
+    promises,
+    options,
+  }: PropsExtractorPromise<TC>) {
+    const _promises: SRCDefinition<TA, TC, R>[] = [];
+    if (Array.isArray(promises)) {
+      const _actions = promises
+        .map(promises =>
+          this.#extractPromises({
+            source,
+            __keys,
+            promises,
+            options,
+          }),
+        )
+        .flat();
+
+      _promises.push(..._actions);
+    } else {
+      const _finally = this.#extractActions(
+        promises.finally,
+        options?.actions,
+      );
+
+      const src = this.#extractPromise<R>(promises.src, options?.promises);
+
+      const then = this.#extractTransitions({
+        __keys,
+        always: promises.then,
+        source,
+        options,
+      });
+
+      const _catch = this.#extractTransitions({
+        __keys,
+        always: promises.catch,
+        source,
+        options,
+      });
+
+      if (this.__options?.strict && !!src) {
+        this.#errors.push(`Promise "${promises.src}" is not defined`);
+      }
+
+      _promises.push({
+        catch: _catch,
+        finally: _finally,
+        src,
+        then,
+      });
+    }
+    return _promises;
+  }
+
   #buildStates = (
     config: Config<TA, TC, R>,
     options?: Options<TA, TC, R>,
@@ -253,6 +332,34 @@ export class Machine<
           entry,
           data,
         });
+      } else if (isPromiseState(state)) {
+        const source = value;
+        const then = this.#extractTransitions({
+          source,
+          always: state.then,
+          options,
+          __keys,
+        });
+        const _catch = this.#extractTransitions({
+          source,
+          always: state.catch,
+          options,
+          __keys,
+        });
+
+        const _finally = this.#extractActions(
+          state.finally,
+          options?.actions,
+        );
+
+        states.push({
+          value,
+          entry,
+          then,
+          catch: _catch,
+          finally: _finally,
+          promises: [],
+        });
       } else {
         const source = value;
         const always = this.#extractTransitions({
@@ -266,7 +373,7 @@ export class Machine<
           value,
           entry,
           exit,
-          always,
+          transitions: always,
         });
       }
     }
@@ -353,10 +460,56 @@ export class Machine<
       current.entry.forEach(entry => entry(context, _events));
       data = current.data(context, _events);
       hasNext = false;
+    } else if (isSimpleStateDefinition(current)) {
+      current.entry.forEach(entry => entry(context, _events));
+
+      for (const transition of current.transitions) {
+        const _cond = transition.cond;
+        if (_cond) {
+          const check = _cond(context, _events);
+          if (!check) continue;
+        }
+        transition.actions.forEach(action => action(context, _events));
+
+        state = transition.target;
+        break;
+      }
+
+      current.exit.forEach(entry => entry(context, _events));
+    }
+    return { state, context, data, hasNext };
+  };
+
+  /**
+   * Returns the next state
+   *
+   * Warning: This function is not pure, only use a inline context
+   */
+  readonly nextAsync: NextFunctionAsync<TA, TC, R> = async ({
+    events,
+    state,
+    context,
+  }) => {
+    const current = this.#searchState(state);
+    let data: R | undefined = undefined;
+    const _events = this.#unFreezeArgs
+      ? events
+      : (Object.freeze(events) as any);
+
+    let hasNext = true;
+    if (isFinalStateDefinition(current)) {
+      current.entry.forEach(entry => entry(context, _events));
+      data = current.data(context, _events);
+      hasNext = false;
+    } else if (isPromiseStateDefinition(current)) {
+      current.entry.forEach(entry => entry(context, _events));
+
+      for (const transition of current.then) {
+      }
     } else {
       current.entry.forEach(entry => entry(context, _events));
 
-      for (const transition of current.always) {
+      for (const transition of current.transitions) {
         const _cond = transition.cond;
         if (_cond) {
           const check = _cond(context, _events);

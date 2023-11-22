@@ -36,8 +36,23 @@ export type SimpleStateDefinition<
   TA = any,
   TC = any,
 > = BaseStateDefinition<TA, TC> & {
-  always: TransitionDefinition<TC, TA>[];
+  transitions: TransitionDefinition<TC, TA>[];
   exit: StateFunction<TC, TA, void>[];
+};
+
+export type SRCDefinition<TA = any, TC = any, R = any> = {
+  then: TransitionDefinition<TC, TA>[];
+  catch: TransitionDefinition<TC, TA>[];
+  finally: StateFunction<TC, TA, void>[];
+  src?: StateFunction<TC, TA, Promise<R>>;
+};
+
+export type PromiseStateDefinition<
+  TA = any,
+  TC = any,
+  R = any,
+> = BaseStateDefinition<TA, TC> & {
+  promises: SRCDefinition<TC, TA, R>[];
 };
 
 export type FinalStateDefinition<
@@ -50,6 +65,7 @@ export type FinalStateDefinition<
 
 export type StateDefinition<TA = any, TC = any, R = any> =
   | SimpleStateDefinition<TA, TC>
+  | PromiseStateDefinition<TA, TC, R>
   | FinalStateDefinition<TA, TC, R>;
 
 export type PromiseWithTimeout = {
@@ -60,30 +76,51 @@ export type PromiseWithTimeout = {
 
 export type SAS = SingleOrArray<string>;
 
-export type Transition =
-  | string
-  | {
-      target: string;
-      cond?: Guards;
-      actions?: SAS;
-      description?: string;
-    };
+export type TransitionObj = {
+  target: string;
+  cond?: Guards;
+  actions?: SAS;
+  description?: string;
+};
+
+export type Transition = string | TransitionObj;
 
 export type BaseState = {
   entry?: SAS;
   description?: string;
 };
 
+export type TransitionArray = [
+  {
+    target: string;
+    cond: Guards;
+    actions?: SAS;
+    description?: string;
+  },
+  ...TransitionObj[],
+];
+
 export type SimpleState = BaseState & {
   exit?: SAS;
-  always: SingleOrArray<Transition>;
+  always: Transition | TransitionArray;
+};
+
+export type SRC = {
+  src: string;
+  then: Transition | TransitionArray;
+  catch: Transition | TransitionArray;
+  finally?: SAS;
+};
+
+export type PromiseState = BaseState & {
+  promises: SingleOrArray<SRC>;
 };
 
 export type FinalState = BaseState & {
   data: string;
 };
 
-export type State = SimpleState | FinalState;
+export type State = SimpleState | FinalState | PromiseState;
 
 export type Config<TA = any, TC = any, R = TC> = {
   context: TC;
@@ -101,6 +138,7 @@ export type Options<TA = any, TC = any, R = any> = {
   actions?: Record<string, StateFunction<TC, TA, any>>;
   guards?: Record<string, StateFunction<TC, TA, boolean>>;
   datas?: Record<string, StateFunction<TC, TA, R>>;
+  promises?: Record<string, StateFunction<TC, TA, Promise<any>>>;
   overflow?: number;
   strict?: boolean;
   unFreezeArgs?: boolean;

@@ -1,7 +1,13 @@
+import { PropsExtractorPromise } from './Machine.types';
 import {
   FinalState,
   FinalStateDefinition,
+  PromiseState,
+  PromiseStateDefinition,
+  SRCDefinition,
+  SimpleStateDefinition,
   StateDefinition,
+  Transition,
 } from './types';
 
 //ignore coverage
@@ -40,12 +46,49 @@ export function deepClone<T = any>(obj: T, hash = new WeakMap()): T {
   );
 }
 
+export function isTransition(value: any): value is Transition {
+  const check1 = typeof value === 'string';
+  const check2 = 'target' in value && typeof value.target === 'string';
+
+  return check1 || check2;
+}
+
 export function isFinalState(value: any): value is FinalState {
   return 'data' in value && typeof value.data === 'string';
+}
+
+export function isPromiseState(value: any): value is PromiseState {
+  const check3 = 'promises' in value;
+  return check3;
 }
 
 export function isFinalStateDefinition<TA = any, TC = any, R = any>(
   value: StateDefinition<TA, TC, R>,
 ): value is FinalStateDefinition<TA, TC, R> {
   return 'data' in value && typeof value.data === 'function';
+}
+
+export function isPromiseStateDefinition<TA = any, TC = any>(
+  value: StateDefinition<TA, TC>,
+): value is PromiseStateDefinition<TA, TC> {
+  const check1 = 'finally' in value && typeof value.finally === 'function';
+
+  return check1;
+}
+
+export function isSimpleStateDefinition<TA = any, TC = any>(
+  value: StateDefinition<TA, TC>,
+): value is SimpleStateDefinition<TA, TC> {
+  return 'exit' in value && typeof value.exit === 'function';
+}
+
+export function extractPromises<
+  TA = any,
+  TC extends Record<string, unknown> = Record<string, unknown>,
+  R = TC,
+>({ source, __keys, promises, options }: PropsExtractorPromise<TC>) {
+  const _promises: SRCDefinition<TC, TA, R>[] = [];
+  if (Array.isArray(promises)) {
+  } else {
+  }
 }

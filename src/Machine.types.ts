@@ -1,9 +1,10 @@
 import {
   Config,
   Options,
-  SingleOrArray,
+  PromiseState,
   StateDefinition,
   Transition,
+  TransitionArray,
   TransitionDefinition,
 } from './types';
 
@@ -45,6 +46,12 @@ export type NextFunction<
   R = TC,
 > = (props: NextArgs<TA, TC>) => NextResult<TC, R>;
 
+export type NextFunctionAsync<
+  TA = any,
+  TC extends Record<string, unknown> = Record<string, unknown>,
+  R = TC,
+> = (props: NextArgs<TA, TC>) => Promise<NextResult<TC, R>>;
+
 export type ExtractFunctionProps<TC extends object = object, TA = any> = {
   source: string;
   options?: Omit<Options<TA, TC>, 'overflow' | 'datas'>;
@@ -60,7 +67,14 @@ export type PropsExtractorTransition<
   TA = any,
 > = {
   source: string;
-  always: SingleOrArray<Transition>;
+  always: Transition | TransitionArray;
+  options?: Omit<Options<TA, TC>, 'overflow' | 'datas'>;
+  __keys: string[];
+};
+
+export type PropsExtractorPromise<TC extends object = object, TA = any> = {
+  source: string;
+  promises: PromiseState['promises'];
   options?: Omit<Options<TA, TC>, 'overflow' | 'datas'>;
   __keys: string[];
 };
