@@ -52,7 +52,7 @@ export type PromiseStateDefinition<
   TC = any,
   R = any,
 > = BaseStateDefinition<TA, TC> & {
-  promises: SRCDefinition<TC, TA, R>[];
+  promises: SRCDefinition<TA, TC, R>[];
 };
 
 export type FinalStateDefinition<

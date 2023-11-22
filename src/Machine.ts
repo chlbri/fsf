@@ -327,6 +327,7 @@ export class Machine<
       const entry = this.#extractActions(state.entry, options?.actions);
       if (isFinalState(state)) {
         const data = options?.datas?.[state.data] ?? identity;
+
         states.push({
           value,
           entry,
@@ -334,31 +335,18 @@ export class Machine<
         });
       } else if (isPromiseState(state)) {
         const source = value;
-        const then = this.#extractTransitions({
-          source,
-          always: state.then,
-          options,
-          __keys,
-        });
-        const _catch = this.#extractTransitions({
-          source,
-          always: state.catch,
-          options,
-          __keys,
-        });
 
-        const _finally = this.#extractActions(
-          state.finally,
-          options?.actions,
-        );
+        const promises = this.#extractPromises({
+          source,
+          __keys,
+          promises: state.promises,
+          options,
+        });
 
         states.push({
-          value,
           entry,
-          then,
-          catch: _catch,
-          finally: _finally,
-          promises: [],
+          promises,
+          value,
         });
       } else {
         const source = value;
@@ -368,7 +356,9 @@ export class Machine<
           options,
           __keys,
         });
+
         const exit = this.#extractActions(state.exit, options?.actions);
+
         states.push({
           value,
           entry,
@@ -504,7 +494,7 @@ export class Machine<
     } else if (isPromiseStateDefinition(current)) {
       current.entry.forEach(entry => entry(context, _events));
 
-      for (const transition of current.then) {
+      for (const promise of current.promises) {
       }
     } else {
       current.entry.forEach(entry => entry(context, _events));
