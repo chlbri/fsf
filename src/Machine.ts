@@ -500,6 +500,8 @@ export class Machine<
       : (Object.freeze(events) as any);
 
     let hasNext = true;
+    const check = isPromiseStateDefinition(current);
+    check; //?
     if (isPromiseStateDefinition(current)) {
       state = await this.#resolveStatePromise(
         current,

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { createLogic } from './createLogic';
+import { createConfig, createLogic } from './createLogic';
 import { interpret } from './interpret';
 
 describe('#1: explicit returns, (tidious guards)', () => {
@@ -99,5 +99,106 @@ describe('#2: explicit returns, (tidious guards), try to modify freezedArgs retu
     expect(safe).not.toThrowError(
       `Cannot assign to read only property 'val' of object '#<Object>'⁠`,
     );
+  });
+});
+
+describe('Async', () => {
+  type Context = {
+    userId?: string;
+    connected?: boolean;
+    iterator: number;
+    errors: string[];
+  };
+
+  type Events = { login: string; password: string };
+  const DB: Events[] = [
+    {
+      login: 'login1',
+      password: 'password1',
+    },
+    {
+      login: 'login2',
+      password: 'password2',
+    },
+  ];
+  describe('Workflow #1', () => {
+    // #region Preparation
+    const config = createConfig({
+      schema: {
+        context: {} as Context,
+        events: {} as Events,
+        data: {} as string,
+        services: {} as {
+          fetch: { data: string; error: any };
+        },
+      },
+      // TODO: Permits to undifined context when it is deeply partial
+      context: { iterator: 0, errors: [] },
+      initial: 'idle',
+      states: {
+        idle: {
+          always: 'fetch',
+        },
+        fetch: {
+          entry: 'iterate',
+          promises: {
+            src: 'fetch',
+            then: {
+              target: 'done',
+              actions: 'assignConnection',
+            },
+            catch: {
+              target: 'error',
+              actions: 'addConnectionError',
+            },
+          },
+        },
+        done: {
+          entry: 'iterate',
+          data: 'sendID',
+        },
+        error: {
+          entry: 'iterate',
+          data: 'sendID',
+        },
+      },
+    });
+
+    const machine = createLogic(config, {
+      actions: {
+        iterate: ctx => {
+          ctx.iterator++;
+        },
+        assignConnection: (ctx, data) => {
+          ctx.userId = data as any;
+        },
+        addConnectionError: (ctx, data) => {
+          ctx.errors.push(data as any);
+          ctx.userId = data as any;
+        },
+      },
+      promises: {
+        fetch: async (ctx, { login, password }) => {
+          const out = DB.find(
+            value => value.login === login && value.password === password,
+          );
+          if (!out) {
+            throw 'noID';
+          }
+          return out.login;
+        },
+      },
+      datas: {
+        sendID: ctx => ctx.userId!,
+      },
+    });
+
+    const getUserID = interpret(machine);
+    // #endregion
+
+    test.only('01 -> Returns ID if ids are in DB', async () => {
+      const id = await getUserID(DB[0]);
+      expect(id).toBe(DB[0].login);
+    });
   });
 });

@@ -136,12 +136,14 @@ export class Interpreter<
 
     while (this.#hasNext) {
       this.#hasNext;
-      await this.#nextAsync();
-      iterator++;
-      if (iterator >= this.#overflow) {
-        iterator; //?
-        throw new Error('Overflow transitions');
-      }
+      await this.#nextAsync().then(() => {
+        this._currentState.value; //?
+        iterator++;
+        if (iterator >= this.#overflow) {
+          iterator; //?
+          throw new Error('Overflow transitions');
+        }
+      });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
