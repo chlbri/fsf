@@ -1,8 +1,9 @@
 import { expect, test } from 'vitest';
 import { createLogic } from '../lib';
+import { createConfig } from './createLogic';
 
 // #region Preparation
-const config = {
+const config = createConfig({
   schema: {
     context: {} as { val: number },
     events: {} as number,
@@ -37,7 +38,7 @@ const config = {
       data: 'val',
     },
   },
-};
+});
 
 const options = {};
 const machine = createLogic(config, options);
@@ -48,5 +49,5 @@ test('Config', () => {
 });
 
 test('Options', () => {
-  expect(machine.__options).toEqual(options);
+  expect(machine.__options).toEqual({ ...options, async: false });
 });
