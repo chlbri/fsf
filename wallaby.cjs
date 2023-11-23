@@ -15,5 +15,8 @@ module.exports = function (_wallaby) {
       ignoreCoverage: /ignore coverage/,
     },
     filesWithNoCoverageCalculated: ['lib/**/**'],
+    delays: {
+      run: 700,
+    },
   };
 };

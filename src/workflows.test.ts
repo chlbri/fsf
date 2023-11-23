@@ -19,12 +19,10 @@ describe('#1: explicit returns, (tidious guards)', () => {
           },
         },
         calc: {
-          always: [
-            {
-              target: 'final',
-              actions: ['action'],
-            },
-          ],
+          always: {
+            target: 'final',
+            actions: ['action'],
+          },
         },
         final: {
           data: 'val',
@@ -74,12 +72,10 @@ describe('#2: explicit returns, (tidious guards), try to modify freezedArgs retu
           },
         },
         calc: {
-          always: [
-            {
-              target: 'final',
-              actions: ['action'],
-            },
-          ],
+          always: {
+            target: 'final',
+            actions: ['action'],
+          },
         },
         final: {
           data: 'val',

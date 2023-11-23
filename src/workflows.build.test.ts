@@ -18,12 +18,10 @@ describe('#1: explicit returns, (tidious guards)', () => {
           },
         },
         calc: {
-          always: [
-            {
-              target: 'final',
-              actions: ['action'],
-            },
-          ],
+          always: {
+            target: 'final',
+            actions: ['action'],
+          },
         },
         final: {
           data: 'val',
@@ -73,12 +71,10 @@ describe('#2: explicit returns, (tidious guards), try to modify freezedArgs retu
           },
         },
         calc: {
-          always: [
-            {
-              target: 'final',
-              actions: ['action'],
-            },
-          ],
+          always: {
+            target: 'final',
+            actions: ['action'],
+          },
         },
         final: {
           data: 'val',
@@ -99,7 +95,7 @@ describe('#2: explicit returns, (tidious guards), try to modify freezedArgs retu
   test('#2: 10 => 14', () => {
     const arg = { val: 10 };
     const safe = () => func(arg);
-    expect(safe).not.toThrowError(
+    expect(safe).not.toThrow(
       `Cannot assign to read only property 'val' of object '#<Object>'⁠`,
     );
   });

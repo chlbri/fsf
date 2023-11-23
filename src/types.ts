@@ -1,3 +1,6 @@
+import { Objects, Pipe, Unions } from 'hotscript';
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export type Undy<T> = T extends null ? Exclude<T, null> | undefined : T;
 
 /* eslint-disable @typescript-eslint/ban-types */
@@ -45,6 +48,7 @@ export type SRCDefinition<TA = any, TC = any, R = any> = {
   catch: TransitionDefinition<TC, TA>[];
   finally: StateFunction<TC, TA, void>[];
   src?: StateFunction<TC, TA, Promise<R>>;
+  value: string;
 };
 
 export type PromiseStateDefinition<
@@ -65,7 +69,7 @@ export type FinalStateDefinition<
 
 export type StateDefinition<TA = any, TC = any, R = any> =
   | SimpleStateDefinition<TA, TC>
-  | PromiseStateDefinition<TA, TC, R>
+  | PromiseStateDefinition<TA, TC, any>
   | FinalStateDefinition<TA, TC, R>;
 
 export type PromiseWithTimeout = {
@@ -97,7 +101,7 @@ export type TransitionArray = [
     actions?: SAS;
     description?: string;
   },
-  ...TransitionObj[],
+  ...Transition[],
 ];
 
 export type SimpleState = BaseState & {
@@ -122,19 +126,67 @@ export type FinalState = BaseState & {
 
 export type State = SimpleState | FinalState | PromiseState;
 
-export type Config<TA = any, TC = any, R = TC> = {
+export type Config<
+  TA = any,
+  TC = any,
+  R = TC,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
+  ST extends Record<string, State> = Record<string, State>,
+> = {
   context: TC;
   initial: string;
   schema: {
     context?: TC;
     events?: TA;
     data: R;
+    services?: S;
   };
   data?: string;
-  states: Record<string, State>;
+  states: ST;
 };
 
-export type Options<TA = any, TC = any, R = any> = {
+export type ExtractArgsFromConfig<C extends Config> = C extends Config<
+  infer A
+>
+  ? A
+  : never;
+
+export type ExtractContextFromConfig<C extends Config> = C extends Config<
+  any,
+  infer A
+>
+  ? A
+  : never;
+
+export type ExtractReturnFromConfig<C extends Config> = C extends Config<
+  any,
+  any,
+  infer A
+>
+  ? A
+  : never;
+
+export type ExtractServicesFromConfig<C extends Config> = C extends Config<
+  any,
+  any,
+  any,
+  infer A
+>
+  ? A
+  : never;
+
+export type ExtractTypestateFromConfig<C extends Config> =
+  C extends Config<any, any, any, any, infer A> ? A : never;
+
+export type Options<
+  TA = any,
+  TC = any,
+  R = TC,
+  Async extends boolean = false,
+> = {
   actions?: Record<string, StateFunction<TC, TA, any>>;
   guards?: Record<string, StateFunction<TC, TA, boolean>>;
   datas?: Record<string, StateFunction<TC, TA, R>>;
@@ -142,7 +194,32 @@ export type Options<TA = any, TC = any, R = any> = {
   overflow?: number;
   strict?: boolean;
   unFreezeArgs?: boolean;
+  async?: Async;
 };
+
+export type OptionsM<
+  TA = any,
+  TC = any,
+  R = TC,
+  Async extends boolean = false,
+> = Options<TA, TC, R, Async> & { async: Async };
+
+export type OptionsFromConfig<C extends Config> = Options<
+  ExtractArgsFromConfig<C>,
+  ExtractContextFromConfig<C>,
+  ExtractReturnFromConfig<C>
+>;
+
+export type IsAsyncState<C extends Record<string, State>> = Pipe<
+  C,
+  [Objects.Values, Unions.ToIntersection]
+> extends PromiseState
+  ? true
+  : false;
+
+export type IsAsyncConfig<C extends Config> = IsAsyncState<
+  ExtractTypestateFromConfig<C>
+>;
 
 export type Primitives = string | number | boolean;
 

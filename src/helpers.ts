@@ -1,10 +1,9 @@
-import { PropsExtractorPromise } from './Machine.types';
 import {
+  Config,
   FinalState,
   FinalStateDefinition,
   PromiseState,
   PromiseStateDefinition,
-  SRCDefinition,
   SimpleStateDefinition,
   StateDefinition,
   Transition,
@@ -65,30 +64,24 @@ export function isPromiseState(value: any): value is PromiseState {
 export function isFinalStateDefinition<TA = any, TC = any, R = any>(
   value: StateDefinition<TA, TC, R>,
 ): value is FinalStateDefinition<TA, TC, R> {
-  return 'data' in value && typeof value.data === 'function';
+  return 'data' in value;
 }
 
 export function isPromiseStateDefinition<TA = any, TC = any>(
   value: StateDefinition<TA, TC>,
-): value is PromiseStateDefinition<TA, TC> {
+): value is PromiseStateDefinition<TA, TC, any> {
   const check1 = 'finally' in value && typeof value.finally === 'function';
 
   return check1;
 }
 
+export function isAsync<const C extends Config>(config: C) {
+  const values = Object.values(config.states);
+  return values.some(isPromiseState);
+}
+
 export function isSimpleStateDefinition<TA = any, TC = any>(
   value: StateDefinition<TA, TC>,
 ): value is SimpleStateDefinition<TA, TC> {
-  return 'exit' in value && typeof value.exit === 'function';
-}
-
-export function extractPromises<
-  TA = any,
-  TC extends Record<string, unknown> = Record<string, unknown>,
-  R = TC,
->({ source, __keys, promises, options }: PropsExtractorPromise<TC>) {
-  const _promises: SRCDefinition<TC, TA, R>[] = [];
-  if (Array.isArray(promises)) {
-  } else {
-  }
+  return 'exit' in value;
 }
