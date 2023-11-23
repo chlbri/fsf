@@ -107,9 +107,9 @@ export class Interpreter<
         state: this._currentState.value,
       });
 
+    state; //?
     this._context = context;
     this.#hasNext = hasNext;
-    state; //?
     this._setCurrentState(state);
     this.#data = data;
   };
@@ -135,15 +135,13 @@ export class Interpreter<
     let iterator = this.#rinit(events[0]);
 
     while (this.#hasNext) {
-      this.#hasNext;
-      await this.#nextAsync().then(() => {
-        this._currentState.value; //?
-        iterator++;
-        if (iterator >= this.#overflow) {
-          iterator; //?
-          throw new Error('Overflow transitions');
-        }
-      });
+      await this.#nextAsync();
+      this._currentState.value; //?
+      iterator++;
+      if (iterator >= this.#overflow) {
+        iterator;
+        throw new Error('Overflow transitions');
+      }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

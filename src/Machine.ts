@@ -459,11 +459,7 @@ export class Machine<
     const _events = this.#unFreezeArgs
       ? events
       : (Object.freeze(events) as any);
-    state; //?
     let hasNext = true;
-    this.#states[1]; //?
-    const arg = isFinalStateDefinition(current);
-    arg; //?
     if (isFinalStateDefinition(current)) {
       current.entry.forEach(entry => entry(context, _events));
       data = current.data(context, _events);
@@ -477,9 +473,9 @@ export class Machine<
         _events,
         state,
       );
-
       current.exit.forEach(entry => entry(context, _events));
     }
+    state; //?
     return { state, context, data, hasNext };
   };
 
@@ -500,8 +496,7 @@ export class Machine<
       : (Object.freeze(events) as any);
 
     let hasNext = true;
-    const check = isPromiseStateDefinition(current);
-    check; //?
+    this.#states[1]; //?
     if (isPromiseStateDefinition(current)) {
       state = await this.#resolveStatePromise(
         current,
@@ -509,8 +504,13 @@ export class Machine<
         _events,
         state,
       );
+      state; //?
     } else {
-      const { data: _data, hasNext: _hasNext } = this.next({
+      const {
+        data: _data,
+        hasNext: _hasNext,
+        state: _state,
+      } = this.next({
         context,
         events,
         state,
@@ -518,6 +518,7 @@ export class Machine<
 
       data = _data;
       hasNext = _hasNext;
+      state = _state;
     }
     return { state, context, data, hasNext };
   };
@@ -555,10 +556,10 @@ export class Machine<
       if (src) {
         await src(context, _events)
           .then(awaited => {
-            this.#runTransitions(then, context, awaited, state);
+            state = this.#runTransitions(then, context, awaited, state);
           })
           .catch(reason => {
-            this.#runTransitions(_catch, context, reason, state);
+            state = this.#runTransitions(_catch, context, reason, state);
           })
           .finally(() => {
             _finally.forEach(entry => entry(context, _events));

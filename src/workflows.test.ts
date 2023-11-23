@@ -196,9 +196,17 @@ describe('Async', () => {
     const getUserID = interpret(machine);
     // #endregion
 
-    test.only('01 -> Returns ID if ids are in DB', async () => {
+    test('01 -> Returns ID if ids are in DB', async () => {
       const id = await getUserID(DB[0]);
       expect(id).toBe(DB[0].login);
+    });
+
+    test('02 -> Returns "noID" if ids are in DB', async () => {
+      const id = await getUserID({
+        login: 'notLogin',
+        password: 'noPass',
+      });
+      expect(id).toBe('noID');
     });
   });
 });
