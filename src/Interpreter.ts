@@ -40,7 +40,6 @@ export class Interpreter<
     this.#machine = machine.safe;
     this.#errors = machine.errors;
     this.#initialContext = this.#parseContext();
-    this.#initialContext; //?
     this.#overflow = options?.overflow ?? 100;
     this._initializeStates();
   }
@@ -94,7 +93,6 @@ export class Interpreter<
 
     this._context = context;
     this.#hasNext = hasNext;
-    state; //?
     this._setCurrentState(state);
     this.#data = data;
   };
@@ -107,7 +105,6 @@ export class Interpreter<
         state: this._currentState.value,
       });
 
-    state; //?
     this._context = context;
     this.#hasNext = hasNext;
     this._setCurrentState(state);
@@ -122,7 +119,6 @@ export class Interpreter<
       this.#next();
       iterator++;
       if (iterator >= this.#overflow) {
-        iterator; //?
         throw new Error('Overflow transitions');
       }
     }
@@ -136,7 +132,6 @@ export class Interpreter<
 
     while (this.#hasNext) {
       await this.#nextAsync();
-      this._currentState.value; //?
       iterator++;
       if (iterator >= this.#overflow) {
         iterator;

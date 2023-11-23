@@ -475,7 +475,6 @@ export class Machine<
       );
       current.exit.forEach(entry => entry(context, _events));
     }
-    state; //?
     return { state, context, data, hasNext };
   };
 
@@ -496,7 +495,6 @@ export class Machine<
       : (Object.freeze(events) as any);
 
     let hasNext = true;
-    this.#states[1]; //?
     if (isPromiseStateDefinition(current)) {
       state = await this.#resolveStatePromise(
         current,
@@ -504,7 +502,6 @@ export class Machine<
         _events,
         state,
       );
-      state; //?
     } else {
       const {
         data: _data,

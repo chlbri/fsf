@@ -71,7 +71,6 @@ export function isPromiseStateDefinition<TA = any, TC = any>(
   value: StateDefinition<TA, TC>,
 ): value is PromiseStateDefinition<TA, TC, any> {
   const check1 = 'promises' in value;
-  check1; //?
   return check1;
 }
 
