@@ -3,33 +3,33 @@ import { isAsync } from './helpers';
 import type { Config, IsAsyncConfig, Options, State } from './types';
 
 export function createConfig<
+  const ST extends Record<string, State>,
   TA = undefined,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
-  S extends Record<string, { data: any; error: any }> = Record<
+  const S extends Record<string, { data: any; error: any }> = Record<
     string,
     { data: any; error: any }
   >,
-  ST extends Record<string, State> = Record<string, State>,
->(config: Config<TA, TC, R, S, ST>) {
+>(config: Config<ST, TA, TC, R, S>) {
   return config;
 }
 
 export function createLogic<
+  const ST extends Record<string, State>,
   TA = undefined,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
-  S extends Record<string, { data: any; error: any }> = Record<
+  const S extends Record<string, { data: any; error: any }> = Record<
     string,
     { data: any; error: any }
   >,
-  ST extends Record<string, State> = Record<string, State>,
->(config: Config<TA, TC, R, S, ST>, options?: Options<TA, TC, R>) {
+>(config: Config<ST, TA, TC, R, S>, options?: Options<ST, S, TA, TC, R>) {
   type AS = IsAsyncConfig<typeof config>;
 
   const async = isAsync(config) as AS;
 
-  const _machine = new Machine<TA, TC, R, S, ST, AS>(config, {
+  const _machine = new Machine(config, {
     ...options,
     async,
   });

@@ -52,12 +52,16 @@ export function isTransition(value: any): value is Transition {
   return check1 || check2;
 }
 
+export function isReadonlyArray(array: any): array is ReadonlyArray<any> {
+  return Array.isArray(array);
+}
+
 export function isFinalState(value: any): value is FinalState {
   return 'data' in value && typeof value.data === 'string';
 }
 
 export function isPromiseState(value: any): value is PromiseState {
-  const check3 = 'promises' in value;
+  const check3 = 'invoke' in value;
   return check3;
 }
 
@@ -70,7 +74,7 @@ export function isFinalStateDefinition<TA = any, TC = any, R = any>(
 export function isPromiseStateDefinition<TA = any, TC = any>(
   value: StateDefinition<TA, TC>,
 ): value is PromiseStateDefinition<TA, TC, any> {
-  const check1 = 'promises' in value;
+  const check1 = 'invoke' in value;
   return check1;
 }
 

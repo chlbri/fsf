@@ -4,12 +4,13 @@ import { Objects, Pipe, Unions } from 'hotscript';
 export type Undy<T> = T extends null ? Exclude<T, null> | undefined : T;
 
 /* eslint-disable @typescript-eslint/ban-types */
-export type StateFunction<TC = any, TA = any, R = any> = (
+export type StateFunction<TC = any, TA = any, R = void> = (
   context: TC,
   events: Undy<TA>,
 ) => R;
 
-export type SingleOrArray<T> = T | T[];
+export type SingleOrArray<T = any> = T | readonly T[];
+export type SoA<T = any> = SingleOrArray<T>;
 
 // #region Guards
 
@@ -56,7 +57,7 @@ export type PromiseStateDefinition<
   TC = any,
   R = any,
 > = BaseStateDefinition<TA, TC> & {
-  promises: SRCDefinition<TA, TC, R>[];
+  invoke: SRCDefinition<TA, TC, R>[];
 };
 
 export type FinalStateDefinition<
@@ -94,7 +95,7 @@ export type BaseState = {
   description?: string;
 };
 
-export type TransitionArray = [
+export type TransitionArray = readonly [
   {
     target: string;
     cond: Guards;
@@ -117,7 +118,7 @@ export type SRC = {
 };
 
 export type PromiseState = BaseState & {
-  promises: SingleOrArray<SRC>;
+  invoke: SoA<SRC>;
 };
 
 export type FinalState = BaseState & {
@@ -127,6 +128,7 @@ export type FinalState = BaseState & {
 export type State = SimpleState | FinalState | PromiseState;
 
 export type Config<
+  ST extends Record<string, State> = Record<string, State>,
   TA = any,
   TC = any,
   R = TC,
@@ -134,7 +136,6 @@ export type Config<
     string,
     { data: any; error: any }
   >,
-  ST extends Record<string, State> = Record<string, State>,
 > = {
   context: TC;
   initial: string;
@@ -142,13 +143,14 @@ export type Config<
     context?: TC;
     events?: TA;
     data: R;
-    services?: S;
+    promises?: S;
   };
   data?: string;
   states: ST;
 };
 
 export type ExtractArgsFromConfig<C extends Config> = C extends Config<
+  any,
   infer A
 >
   ? A
@@ -156,12 +158,14 @@ export type ExtractArgsFromConfig<C extends Config> = C extends Config<
 
 export type ExtractContextFromConfig<C extends Config> = C extends Config<
   any,
+  any,
   infer A
 >
   ? A
   : never;
 
 export type ExtractReturnFromConfig<C extends Config> = C extends Config<
+  any,
   any,
   any,
   infer A
@@ -173,21 +177,112 @@ export type ExtractServicesFromConfig<C extends Config> = C extends Config<
   any,
   any,
   any,
+  any,
   infer A
 >
   ? A
   : never;
 
 export type ExtractTypestateFromConfig<C extends Config> =
-  C extends Config<any, any, any, any, infer A> ? A : never;
+  C extends Config<infer A> ? A : never;
+
+export type ExtractSOAToUnion<T extends SingleOrArray | undefined> =
+  T extends undefined ? never : T extends Readonly<any> ? T[number] : T;
+
+export type GetEntryActions<ST extends Record<string, State>> =
+  GetEntryActionsFromState<ST[keyof ST]>;
+
+export type GetEntryActionsFromState<ST extends State> = ExtractSOAToUnion<
+  ST['entry']
+>;
+
+export type GetTransitionsActions<T extends Transition | TransitionArray> =
+  T extends string
+    ? never
+    : T extends TransitionObj
+    ? ExtractSOAToUnion<T['actions']>
+    : T extends TransitionArray
+    ? GetTransitionsActions<T[number]>
+    : never;
+
+export type GetExitActionsFromSimpleState<ST extends SimpleState> =
+  ExtractSOAToUnion<ST['exit']>;
+
+export type GetActionKeysFromSimpleState<ST extends SimpleState> =
+  | GetTransitionsActions<ST['always']>
+  | GetEntryActionsFromState<ST>
+  | GetExitActionsFromSimpleState<ST>;
+
+export type GetPromiseKeysFromInvoke<T extends PromiseState['invoke']> =
+  T extends SRC
+    ? T['src']
+    : T extends ReadonlyArray<SRC>
+    ? T[number]['src']
+    : never;
+
+export type GetActionsBySRC<
+  S extends Record<string, { data: any; error: any }>,
+  T extends SRC,
+  TC extends object = object,
+> = Record<
+  GetTransitionsActions<T['then']>,
+  StateFunction<TC, S[T['src']]['data']>
+> &
+  Record<
+    GetTransitionsActions<T['catch']>,
+    StateFunction<TC, S[T['src']]['error']>
+  >;
+
+export type GetActionsFromPromises<
+  ST extends PromiseState,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
+  TC extends object = object,
+  TA = any,
+> = Record<GetEntryActionsFromState<ST>, StateFunction<TC, TA, void>> &
+  (ST['invoke'] extends infer Invoke
+    ? Invoke extends SRC
+      ? GetActionsBySRC<S, Invoke, TC>
+      : Invoke extends SRC[]
+      ? GetActionsBySRC<S, Invoke[number], TC>
+      : {}
+    : {});
+
+export type GetActionsFromState<
+  ST extends State,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
+  TC extends object = object,
+  TA = any,
+> = ST extends PromiseState
+  ? GetActionsFromPromises<ST, S, TC, TA>
+  : ST extends SimpleState
+  ? Record<GetActionKeysFromSimpleState<ST>, StateFunction<TC, TA>>
+  : ST extends FinalState
+  ? Record<GetEntryActionsFromState<ST>, StateFunction<TC, TA>>
+  : never;
 
 export type Options<
+  ST extends Record<string, State> = Record<string, State>,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
   TA = any,
-  TC = any,
+  TC extends object = object,
   R = TC,
   Async extends boolean = false,
 > = {
-  actions?: Record<string, StateFunction<TC, TA, any>>;
+  actions?: Partial<
+    Pipe<
+      GetActionsFromState<ST[keyof ST], S, TC, TA>,
+      [Unions.ToIntersection]
+    >
+  >;
   guards?: Record<string, StateFunction<TC, TA, boolean>>;
   datas?: Record<string, StateFunction<TC, TA, R>>;
   promises?: Record<string, StateFunction<TC, TA, Promise<any>>>;
@@ -198,11 +293,16 @@ export type Options<
 };
 
 export type OptionsM<
+  ST extends Record<string, State> = Record<string, State>,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
   TA = any,
-  TC = any,
+  TC extends object = object,
   R = TC,
   Async extends boolean = false,
-> = Options<TA, TC, R, Async> & { async: Async };
+> = Options<ST, S, TA, TC, R, Async> & { async: Async };
 
 export type OptionsFromConfig<C extends Config> = Options<
   ExtractArgsFromConfig<C>,

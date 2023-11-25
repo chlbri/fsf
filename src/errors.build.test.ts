@@ -17,11 +17,9 @@ test('#1: Overflow transitions', () => {
         },
       },
       calc: {
-        always: [
-          {
-            target: 'final',
-          },
-        ],
+        always: {
+          target: 'final',
+        },
       },
       final: {
         data: 'any',
@@ -76,6 +74,7 @@ describe('#2: State final is not defined', () => {
           calc: {
             always: [
               {
+                cond: 'cond',
                 target: 'final',
                 actions: ['action'],
               },

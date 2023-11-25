@@ -3,6 +3,7 @@ import {
   Options,
   OptionsM,
   PromiseState,
+  State,
   StateDefinition,
   Transition,
   TransitionArray,
@@ -10,6 +11,11 @@ import {
 } from './types';
 
 export type MarchineArgs<
+  ST extends Record<string, State>,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
@@ -18,8 +24,8 @@ export type MarchineArgs<
   _states: StateDefinition<TA, TC, R>[];
   initial: string;
   context: TC;
-  config: Config<TA, TC, R>;
-  options?: Options<TA, TC, R, Async>;
+  config: Config<ST, TA, TC, R>;
+  options?: Options<ST, S, TA, TC, R, Async>;
   // test?: boolean;
 };
 
@@ -55,13 +61,18 @@ export type NextFunctionAsync<
 > = (props: NextArgs<TA, TC>) => Promise<NextResult<TC, R>>;
 
 export type ExtractFunctionProps<
+  ST extends Record<string, State> = Record<string, State>,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
   TC extends object = object,
   TA = any,
   R = any,
   Async extends boolean = false,
 > = {
   source: string;
-  options?: Omit<Options<TA, TC, R, Async>, 'overflow' | 'datas'>;
+  options?: Omit<Options<ST, S, TA, TC, R, Async>, 'overflow' | 'datas'>;
   __keys: string[];
 };
 
@@ -70,6 +81,11 @@ export type ExtractFunction<TC extends object = object, TA = any> = (
 ) => TransitionDefinition<TC, TA>;
 
 export type PropsExtractorTransition<
+  ST extends Record<string, State> = Record<string, State>,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
   TC extends object = object,
   TA = any,
   R = any,
@@ -77,28 +93,38 @@ export type PropsExtractorTransition<
 > = {
   source: string;
   always: Transition | TransitionArray;
-  options?: Omit<Options<TA, TC, R, Async>, 'overflow' | 'datas'>;
+  options?: Omit<Options<ST, S, TA, TC, R, Async>, 'overflow' | 'datas'>;
   __keys: string[];
 };
 
 export type PropsExtractorPromise<
+  ST extends Record<string, State> = Record<string, State>,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
   TC extends object = object,
   TA = any,
   R = any,
   Async extends boolean = false,
 > = {
   source: string;
-  promises: PromiseState['promises'];
-  options?: Omit<Options<TA, TC, R, Async>, 'overflow' | 'datas'>;
+  promises: PromiseState['invoke'];
+  options?: Omit<Options<ST, S, TA, TC, R, Async>, 'overflow' | 'datas'>;
   __keys: string[];
 };
 
 export type CloneArgs<
+  ST extends Record<string, State>,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
   Async extends boolean = false,
 > = {
-  config?: Partial<Config<TA, TC, R>>;
-  options?: OptionsM<TA, TC, R, Async>;
+  config?: Partial<Config<ST, TA, TC, R>>;
+  options?: OptionsM<ST, S, TA, TC, R, Async>;
 };

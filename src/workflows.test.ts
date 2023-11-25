@@ -111,6 +111,7 @@ describe('Async', () => {
   };
 
   type Events = { login: string; password: string };
+
   const DB: Events[] = [
     {
       login: 'login1',
@@ -121,6 +122,7 @@ describe('Async', () => {
       password: 'password2',
     },
   ];
+
   describe('Workflow #1', () => {
     // #region Preparation
     const config = createConfig({
@@ -128,7 +130,7 @@ describe('Async', () => {
         context: {} as Context,
         events: {} as Events,
         data: {} as string,
-        services: {} as {
+        promises: {} as {
           fetch: { data: string; error: any };
         },
       },
@@ -141,7 +143,7 @@ describe('Async', () => {
         },
         fetch: {
           entry: 'iterate',
-          promises: {
+          invoke: {
             src: 'fetch',
             then: {
               target: 'done',

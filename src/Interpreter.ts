@@ -6,14 +6,14 @@ export type InterpreterOptions = {
 };
 
 export class Interpreter<
+  const ST extends Record<string, State>,
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
-  S extends Record<string, { data: any; error: any }> = Record<
+  const S extends Record<string, { data: any; error: any }> = Record<
     string,
     { data: any; error: any }
   >,
-  ST extends Record<string, State> = Record<string, State>,
   Async extends boolean = false,
 > {
   #events!: TA;
@@ -25,7 +25,7 @@ export class Interpreter<
   readonly #overflow: number;
   protected _currentState!: StateDefinition<TA, TC>;
   #hasNext = true;
-  #machine: Machine<TA, TC, R, S, ST, Async>;
+  #machine: Machine<ST, TA, TC, R, S, Async>;
   #errors: string[];
   // #endregion
 
@@ -34,7 +34,7 @@ export class Interpreter<
   };
 
   constructor(
-    machine: Machine<TA, TC, R, S, ST, Async>,
+    machine: Machine<ST, TA, TC, R, S, Async>,
     options?: InterpreterOptions,
   ) {
     this.#machine = machine.safe;

@@ -7,17 +7,17 @@ type ReturnAsync<Async extends boolean, TA, R> = Async extends false
   : (...events: Param<TA>) => Promise<NonNullable<R>>;
 
 export function interpret<
+  const ST extends Record<string, State>,
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
-  S extends Record<string, { data: any; error: any }> = Record<
+  const S extends Record<string, { data: any; error: any }> = Record<
     string,
     { data: any; error: any }
   >,
-  ST extends Record<string, State> = Record<string, State>,
   Async extends boolean = false,
 >(
-  machine: Machine<TA, TC, R, S, ST, Async>,
+  machine: Machine<ST, TA, TC, R, S, Async>,
   options?: InterpreterOptions,
 ): ReturnAsync<Async, TA, R> {
   const interpreter = new Interpreter(machine, options);

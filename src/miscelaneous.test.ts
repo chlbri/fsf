@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { expect, test } from 'vitest';
 import { createConfig, createLogic } from './createLogic';
 
@@ -18,32 +19,30 @@ const config = createConfig({
       always: [
         {
           cond: 'cond',
-          target: 'calc',
+          target: 'calculation',
         },
         'final',
       ],
     },
     glue: {
-      promises: [],
+      invoke: [],
     },
-    calc: {
-      always: [
-        {
-          cond: 'tidious',
-          target: 'final',
-          actions: ['action'],
-        },
-      ],
+    calculation: {
+      entry: ['add3'],
+      always: {
+        cond: 'tidious',
+        target: 'final',
+        actions: ['action'],
+      },
     },
     final: {
-      entry: 'add1',
+      entry: ['add1'],
       data: 'val',
     },
   },
 });
 
-const options = {};
-const machine = createLogic(config, options);
+const machine = createLogic(config);
 // #endregion
 
 test('Config', () => {
@@ -51,5 +50,5 @@ test('Config', () => {
 });
 
 test('Options', () => {
-  expect(machine.__options).toEqual({ ...options, async: true });
+  expect(machine.__options).toEqual({ async: true });
 });
