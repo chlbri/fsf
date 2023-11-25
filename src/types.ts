@@ -189,6 +189,7 @@ export type ExtractTypestateFromConfig<C extends Config> =
 export type ExtractSOAToUnion<T extends SingleOrArray | undefined> =
   T extends undefined ? never : T extends Readonly<any> ? T[number] : T;
 
+// #region Actions for Options
 export type GetEntryActions<ST extends Record<string, State>> =
   GetEntryActionsFromState<ST[keyof ST]>;
 
@@ -265,6 +266,140 @@ export type GetActionsFromState<
   : ST extends FinalState
   ? Record<GetEntryActionsFromState<ST>, StateFunction<TC, TA>>
   : never;
+// #endregion
+
+// #region Guards for Options
+
+export type GetGuardsFromGuards<T extends Guards | undefined> =
+  T extends undefined
+    ? never
+    : T extends string
+    ? T
+    : T extends string[]
+    ? T[number]
+    : T extends readonly GuardUnion[]
+    ? GetGuardsFromGuards<T[number]>
+    : T extends GuardOr
+    ? GetGuardsFromGuards<T['or']>
+    : T extends GuardAnd
+    ? GetGuardsFromGuards<T['and']>
+    : never;
+
+export type GetGuardKeysFromTransition<
+  T extends Transition | TransitionArray,
+> = T extends string
+  ? 6
+  : T extends TransitionObj
+  ? GetGuardsFromGuards<T['cond']>
+  : T extends TransitionArray
+  ? GetGuardKeysFromTransition<T[number]>
+  : 5;
+
+export type RecordFunctions<
+  K,
+  TC extends object = object,
+  TA = any,
+  R = void,
+> = K extends string ? Record<K, StateFunction<TC, TA, R>> : never;
+
+export type GetGuardsFromSimpleState<
+  ST extends SimpleState,
+  TC extends object = object,
+  TA = any,
+> = GetGuardKeysFromTransition<ST['always']> extends infer Keys
+  ? Record<Keys & string, StateFunction<TC, TA, boolean>>
+  : never;
+
+export type GetGuardsFromSRC<
+  Invoke extends SRC,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
+  TC extends object = object,
+> = (GetGuardKeysFromTransition<Invoke['then']> extends infer ThenKeys
+  ? ThenKeys extends number
+    ? {}
+    : RecordFunctions<ThenKeys, TC, S[Invoke['src']]['data'], boolean>
+  : {}) &
+  (GetGuardKeysFromTransition<Invoke['catch']> extends infer CatchKeys
+    ? CatchKeys extends never
+      ? {}
+      : RecordFunctions<CatchKeys, TC, S[Invoke['src']]['error'], boolean>
+    : {});
+
+export type GetGuardsFromPromiseState<
+  ST extends PromiseState,
+  S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
+  TC extends object = object,
+> = ST['invoke'] extends infer Invoke
+  ? Invoke extends SRC
+    ? GetGuardsFromSRC<Invoke, S, TC>
+    : Invoke extends ReadonlyArray<SRC>
+    ? GetGuardsFromSRC<Invoke[number], S, TC>
+    : 1
+  : 2;
+
+type Cond1 = [
+  'cond6',
+  'cond5',
+  'cond4',
+  { or: 'cond1' },
+  { and: ['cond2', 'cond3'] },
+];
+
+type Teste = GetGuardsFromGuards<Cond1>;
+
+type Teste2 = GetGuardsFromSimpleState<{
+  always: [
+    {
+      target: '';
+      cond: Cond1;
+    },
+    {
+      target: '';
+      cond: 'cond7';
+    },
+    {
+      target: '';
+      cond: { and: ['cond8', { or: ['cond9', 'cond10'] }] };
+    },
+  ];
+}>;
+
+type Test3 = GetGuardsFromPromiseState<
+  {
+    invoke: {
+      then: [
+        {
+          target: '';
+          cond: Cond1;
+        },
+        {
+          target: '';
+          cond: 'cond7';
+        },
+        {
+          target: '';
+          cond: { and: ['cond8', { or: ['cond9', 'cond10'] }] };
+        },
+      ];
+      src: 'data';
+      catch: '';
+    };
+  },
+  {
+    data: {
+      data: number;
+      error: string;
+    };
+  },
+  { data: string }
+>;
+// #endregion
 
 export type Options<
   ST extends Record<string, State> = Record<string, State>,
