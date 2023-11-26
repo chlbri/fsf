@@ -288,12 +288,12 @@ export type GetGuardsFromGuards<T extends Guards | undefined> =
 export type GetGuardKeysFromTransition<
   T extends Transition | TransitionArray,
 > = T extends string
-  ? 6
+  ? never
   : T extends TransitionObj
   ? GetGuardsFromGuards<T['cond']>
   : T extends TransitionArray
   ? GetGuardKeysFromTransition<T[number]>
-  : 5;
+  : never;
 
 export type RecordFunctions<
   K,
@@ -340,65 +340,9 @@ export type GetGuardsFromPromiseState<
     ? GetGuardsFromSRC<Invoke, S, TC>
     : Invoke extends ReadonlyArray<SRC>
     ? GetGuardsFromSRC<Invoke[number], S, TC>
-    : 1
-  : 2;
+    : never
+  : never;
 
-type Cond1 = [
-  'cond6',
-  'cond5',
-  'cond4',
-  { or: 'cond1' },
-  { and: ['cond2', 'cond3'] },
-];
-
-type Teste = GetGuardsFromGuards<Cond1>;
-
-type Teste2 = GetGuardsFromSimpleState<{
-  always: [
-    {
-      target: '';
-      cond: Cond1;
-    },
-    {
-      target: '';
-      cond: 'cond7';
-    },
-    {
-      target: '';
-      cond: { and: ['cond8', { or: ['cond9', 'cond10'] }] };
-    },
-  ];
-}>;
-
-type Test3 = GetGuardsFromPromiseState<
-  {
-    invoke: {
-      then: [
-        {
-          target: '';
-          cond: Cond1;
-        },
-        {
-          target: '';
-          cond: 'cond7';
-        },
-        {
-          target: '';
-          cond: { and: ['cond8', { or: ['cond9', 'cond10'] }] };
-        },
-      ];
-      src: 'data';
-      catch: '';
-    };
-  },
-  {
-    data: {
-      data: number;
-      error: string;
-    };
-  },
-  { data: string }
->;
 // #endregion
 
 export type Options<
