@@ -5,7 +5,7 @@ import type { Config, IsAsyncConfig, Options, State } from './types';
 export function createConfig<
   const ST extends Record<string, State>,
   TA = undefined,
-  TC extends Record<string, unknown> = Record<string, unknown>,
+  const TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
   const S extends Record<string, { data: any; error: any }> = Record<
     string,
@@ -18,7 +18,7 @@ export function createConfig<
 export function createLogic<
   const ST extends Record<string, State>,
   TA = undefined,
-  TC extends Record<string, unknown> = Record<string, unknown>,
+  const TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
   const S extends Record<string, { data: any; error: any }> = Record<
     string,

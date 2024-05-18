@@ -1,5 +1,3 @@
-import { Objects, Pipe, Unions } from 'hotscript';
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export type Undy<T> = T extends null ? Exclude<T, null> | undefined : T;
 
@@ -149,39 +147,17 @@ export type Config<
   states: ST;
 };
 
-export type ExtractArgsFromConfig<C extends Config> = C extends Config<
-  any,
-  infer A
->
-  ? A
-  : never;
+export type ExtractArgsFromConfig<C extends Config> =
+  C extends Config<any, infer A> ? A : never;
 
-export type ExtractContextFromConfig<C extends Config> = C extends Config<
-  any,
-  any,
-  infer A
->
-  ? A
-  : never;
+export type ExtractContextFromConfig<C extends Config> =
+  C extends Config<any, any, infer A> ? A : never;
 
-export type ExtractReturnFromConfig<C extends Config> = C extends Config<
-  any,
-  any,
-  any,
-  infer A
->
-  ? A
-  : never;
+export type ExtractReturnFromConfig<C extends Config> =
+  C extends Config<any, any, any, infer A> ? A : never;
 
-export type ExtractServicesFromConfig<C extends Config> = C extends Config<
-  any,
-  any,
-  any,
-  any,
-  infer A
->
-  ? A
-  : never;
+export type ExtractServicesFromConfig<C extends Config> =
+  C extends Config<any, any, any, any, infer A> ? A : never;
 
 export type ExtractTypestateFromConfig<C extends Config> =
   C extends Config<infer A> ? A : never;
@@ -201,10 +177,10 @@ export type GetTransitionsActions<T extends Transition | TransitionArray> =
   T extends string
     ? never
     : T extends TransitionObj
-    ? ExtractSOAToUnion<T['actions']>
-    : T extends TransitionArray
-    ? GetTransitionsActions<T[number]>
-    : never;
+      ? ExtractSOAToUnion<T['actions']>
+      : T extends TransitionArray
+        ? GetTransitionsActions<T[number]>
+        : never;
 
 export type GetExitActionsFromSimpleState<ST extends SimpleState> =
   ExtractSOAToUnion<ST['exit']>;
@@ -218,8 +194,8 @@ export type GetPromiseKeysFromInvoke<T extends PromiseState['invoke']> =
   T extends SRC
     ? T['src']
     : T extends ReadonlyArray<SRC>
-    ? T[number]['src']
-    : never;
+      ? T[number]['src']
+      : never;
 
 export type GetActionsBySRC<
   S extends Record<string, { data: any; error: any }>,
@@ -247,8 +223,8 @@ export type GetActionsFromPromises<
     ? Invoke extends SRC
       ? GetActionsBySRC<S, Invoke, TC>
       : Invoke extends SRC[]
-      ? GetActionsBySRC<S, Invoke[number], TC>
-      : {}
+        ? GetActionsBySRC<S, Invoke[number], TC>
+        : {}
     : {});
 
 export type GetActionsFromState<
@@ -262,10 +238,10 @@ export type GetActionsFromState<
 > = ST extends PromiseState
   ? GetActionsFromPromises<ST, S, TC, TA>
   : ST extends SimpleState
-  ? Record<GetActionKeysFromSimpleState<ST>, StateFunction<TC, TA>>
-  : ST extends FinalState
-  ? Record<GetEntryActionsFromState<ST>, StateFunction<TC, TA>>
-  : never;
+    ? Record<GetActionKeysFromSimpleState<ST>, StateFunction<TC, TA>>
+    : ST extends FinalState
+      ? Record<GetEntryActionsFromState<ST>, StateFunction<TC, TA>>
+      : never;
 // #endregion
 
 // #region Guards for Options
@@ -274,26 +250,26 @@ export type GetGuardsFromGuards<T extends Guards | undefined> =
   T extends undefined
     ? never
     : T extends string
-    ? T
-    : T extends string[]
-    ? T[number]
-    : T extends readonly GuardUnion[]
-    ? GetGuardsFromGuards<T[number]>
-    : T extends GuardOr
-    ? GetGuardsFromGuards<T['or']>
-    : T extends GuardAnd
-    ? GetGuardsFromGuards<T['and']>
-    : never;
+      ? T
+      : T extends string[]
+        ? T[number]
+        : T extends readonly GuardUnion[]
+          ? GetGuardsFromGuards<T[number]>
+          : T extends GuardOr
+            ? GetGuardsFromGuards<T['or']>
+            : T extends GuardAnd
+              ? GetGuardsFromGuards<T['and']>
+              : never;
 
 export type GetGuardKeysFromTransition<
   T extends Transition | TransitionArray,
 > = T extends string
   ? never
   : T extends TransitionObj
-  ? GetGuardsFromGuards<T['cond']>
-  : T extends TransitionArray
-  ? GetGuardKeysFromTransition<T[number]>
-  : never;
+    ? GetGuardsFromGuards<T['cond']>
+    : T extends TransitionArray
+      ? GetGuardKeysFromTransition<T[number]>
+      : never;
 
 export type RecordFunctions<
   K,
@@ -306,9 +282,10 @@ export type GetGuardsFromSimpleState<
   ST extends SimpleState,
   TC extends object = object,
   TA = any,
-> = GetGuardKeysFromTransition<ST['always']> extends infer Keys
-  ? Record<Keys & string, StateFunction<TC, TA, boolean>>
-  : never;
+> =
+  GetGuardKeysFromTransition<ST['always']> extends infer Keys
+    ? Record<Keys & string, StateFunction<TC, TA, boolean>>
+    : never;
 
 export type GetGuardsFromSRC<
   Invoke extends SRC,
@@ -339,11 +316,17 @@ export type GetGuardsFromPromiseState<
   ? Invoke extends SRC
     ? GetGuardsFromSRC<Invoke, S, TC>
     : Invoke extends ReadonlyArray<SRC>
-    ? GetGuardsFromSRC<Invoke[number], S, TC>
-    : never
+      ? GetGuardsFromSRC<Invoke[number], S, TC>
+      : never
   : never;
 
 // #endregion
+
+type UnionToIntersection<U> = (
+  U extends any ? (x: U) => void : never
+) extends (x: infer I) => void
+  ? I
+  : never;
 
 export type Options<
   ST extends Record<string, State> = Record<string, State>,
@@ -357,10 +340,7 @@ export type Options<
   Async extends boolean = false,
 > = {
   actions?: Partial<
-    Pipe<
-      GetActionsFromState<ST[keyof ST], S, TC, TA>,
-      [Unions.ToIntersection]
-    >
+    UnionToIntersection<GetActionsFromState<ST[keyof ST], S, TC, TA>>
   >;
   guards?: Record<string, StateFunction<TC, TA, boolean>>;
   datas?: Record<string, StateFunction<TC, TA, R>>;
@@ -389,12 +369,12 @@ export type OptionsFromConfig<C extends Config> = Options<
   ExtractReturnFromConfig<C>
 >;
 
-export type IsAsyncState<C extends Record<string, State>> = Pipe<
-  C,
-  [Objects.Values, Unions.ToIntersection]
-> extends PromiseState
-  ? true
-  : false;
+export type IsAsyncState<C extends Record<string, State>> =
+  C extends Record<any, infer A>
+    ? A extends PromiseState
+      ? true
+      : false
+    : never;
 
 export type IsAsyncConfig<C extends Config> = IsAsyncState<
   ExtractTypestateFromConfig<C>

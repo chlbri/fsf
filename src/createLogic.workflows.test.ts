@@ -31,7 +31,7 @@ describe('#1: explicit returns, (tidious guards)', () => {
     },
     {
       actions: {
-        action: (ctx, arg = { val: 3 }) => {
+        action: (ctx: { val: number }, arg = { val: 3 }) => {
           ctx.val = ctx.val + arg.val;
           arg.val = 200;
         },
@@ -84,7 +84,7 @@ describe('#2: explicit returns, (tidious guards), try to modify freezedArgs retu
     },
     {
       actions: {
-        action: (ctx, arg = { val: 3 }) => {
+        action: (ctx: { val: number }, arg = { val: 3 }) => {
           ctx.val = ctx.val + arg.val;
           arg.val = 200;
         },
@@ -180,7 +180,7 @@ describe('Async', () => {
         },
       },
       promises: {
-        fetch: async (ctx, { login, password }) => {
+        fetch: async (_, { login, password }) => {
           const out = DB.find(
             value => value.login === login && value.password === password,
           );

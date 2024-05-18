@@ -91,7 +91,7 @@ export class Machine<
   }
   // #endregion
 
-  // #region Buiilding states
+  // #region Building states
   #assignGuardsUnion = (
     values: readonly GuardUnion[],
     guards: Required<Options<ST, S, TA, TC, R>>['guards'],
@@ -498,9 +498,7 @@ export class Machine<
   }) => {
     const current = this.#searchState(state);
     let data: R | undefined = undefined;
-    const _events = this.#unFreezeArgs
-      ? events
-      : (Object.freeze(events) as any);
+    const _events = this.#unFreezeArgs ? events : Object.freeze(events);
 
     let hasNext = true;
     if (isPromiseStateDefinition(current)) {
