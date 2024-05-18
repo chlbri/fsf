@@ -12,18 +12,21 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: 'Install node'
-        uses: actions/setup-node@v3
+      - name: Setup node for publication
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: '20'
+          always-auth: true
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@bemedev'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v3
         id: pnpm-install
         with:
-          version: 7
+          version: 9
           run_install: false
 
       - name: Get pnpm store directory
@@ -31,8 +34,7 @@ jobs:
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         name: Setup pnpm cache
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
@@ -41,25 +43,24 @@ jobs:
             hashFiles('**/pnpm-lock.yaml')}}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
-
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Publish
-        uses: JS-DevTools/npm-publish@v1
+      - name: Build
+        run: pnpm run build
+
+      - uses: JS-DevTools/npm-publish@v3
+        id: publish
+        name: Publish
         with:
           token: ${{ secrets.NPM_TOKEN }}
-          greater-version-only: true
           access: public
+          strategy: upgrade
 
-      # - name: TODO => Notification
-      #   run: echo 'TODO => Build a Notification pipeline'
+      - name: Check - updated
+        if: ${{ steps.publish.outputs.type }}
+        run: echo "Version changed!"
 
-  # clean:
-  #   runs-on: ubuntu-latest
-  #   needs: publish
-
-  #   steps:
-
-  #     - name: Some
-  #       run: echo "TODO => Cleaning up"
+      - name: Check - not updated
+        if: ${{ ! steps.publish.outputs.type }}
+        run: echo "Remain the same!"
