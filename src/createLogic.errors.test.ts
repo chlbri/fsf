@@ -3,42 +3,30 @@ import { createLogic } from './createLogic';
 import { interpret } from './interpret';
 
 test('#1: Overflow transitions', () => {
-  const machine = createLogic(
-    {
-      schema: {
-        context: {} as { val: number },
-        events: {} as number,
-        data: {} as number,
+  const machine = createLogic({
+    schema: {
+      context: {} as { val: number },
+      events: {} as number,
+      data: {} as number,
+    },
+    context: { val: 4 },
+    initial: 'idle',
+    states: {
+      idle: {
+        always: {
+          target: 'calc',
+        },
       },
-      context: { val: 4 },
-      initial: 'idle',
-      states: {
-        idle: {
-          always: {
-            target: 'calc',
-          },
+      calc: {
+        always: {
+          target: 'final',
         },
-        calc: {
-          always: [
-            {
-              target: 'final',
-              actions: ['action'],
-            },
-          ],
-        },
-        final: {
-          data: 'any',
-        },
+      },
+      final: {
+        data: 'any',
       },
     },
-    {
-      actions: {
-        action: (ctx, arg) => {
-          ctx.val = ctx.val + arg;
-        },
-      },
-    },
-  );
+  });
   const func = () => interpret(machine, { overflow: 0 })(3);
   expect(func).toThrowError('Overflow transitions');
 });
@@ -87,6 +75,7 @@ describe('#2: State final is not defined', () => {
           calc: {
             always: [
               {
+                cond: 'cond',
                 target: 'final',
                 actions: ['action'],
               },

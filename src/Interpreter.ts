@@ -1,14 +1,20 @@
 import { Machine } from './Machine';
-import { Param, StateDefinition } from './types';
+import { Param, State, StateDefinition } from './types';
 
 export type InterpreterOptions = {
   overflow?: number;
 };
 
 export class Interpreter<
+  const ST extends Record<string, State>,
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
+  const S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
+  Async extends boolean = false,
 > {
   #events!: TA;
   readonly #initialContext: TC;
@@ -19,7 +25,7 @@ export class Interpreter<
   readonly #overflow: number;
   protected _currentState!: StateDefinition<TA, TC>;
   #hasNext = true;
-  #machine: Machine<TA, TC, R>;
+  #machine: Machine<ST, TA, TC, R, S, Async>;
   #errors: string[];
   // #endregion
 
@@ -27,11 +33,13 @@ export class Interpreter<
     return JSON.parse(this.#machine.__initialContext);
   };
 
-  constructor(machine: Machine<TA, TC, R>, options?: InterpreterOptions) {
+  constructor(
+    machine: Machine<ST, TA, TC, R, S, Async>,
+    options?: InterpreterOptions,
+  ) {
     this.#machine = machine.safe;
     this.#errors = machine.errors;
     this.#initialContext = this.#parseContext();
-    this.#initialContext; //?
     this.#overflow = options?.overflow ?? 100;
     this._initializeStates();
   }
@@ -89,13 +97,44 @@ export class Interpreter<
     this.#data = data;
   };
 
+  #nextAsync = async () => {
+    const { context, hasNext, state, data } =
+      await this.#machine.nextAsync({
+        context: this._context,
+        events: this.#events,
+        state: this._currentState.value,
+      });
+
+    this._context = context;
+    this.#hasNext = hasNext;
+    this._setCurrentState(state);
+    this.#data = data;
+  };
+
   readonly build = (...events: Param<TA>) => {
     let iterator = this.#rinit(events[0]);
 
     while (this.#hasNext) {
+      this.#hasNext;
       this.#next();
       iterator++;
       if (iterator >= this.#overflow) {
+        throw new Error('Overflow transitions');
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return this.#data!;
+  };
+
+  readonly buildAsync = async (...events: Param<TA>) => {
+    let iterator = this.#rinit(events[0]);
+
+    while (this.#hasNext) {
+      await this.#nextAsync();
+      iterator++;
+      if (iterator >= this.#overflow) {
+        iterator;
         throw new Error('Overflow transitions');
       }
     }
