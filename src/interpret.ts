@@ -2,9 +2,9 @@ import { Interpreter, InterpreterOptions } from './Interpreter';
 import { Machine } from './Machine';
 import { Param, State } from './types';
 
-type ReturnAsync<Async extends boolean, TA, R> = Async extends false
-  ? (...events: Param<TA>) => NonNullable<R>
-  : (...events: Param<TA>) => Promise<NonNullable<R>>;
+type ReturnAsync<Async extends boolean, TA, R> = true extends Async
+  ? (...events: Param<TA>) => Promise<NonNullable<R>>
+  : (...events: Param<TA>) => NonNullable<R>;
 
 export function interpret<
   const ST extends Record<string, State>,
