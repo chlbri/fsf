@@ -1,0 +1,51 @@
+name: Upgrade
+
+on:
+  #region Only for test
+  # push:
+  #   branches-ignore:
+  #     - master
+  #     - main
+  #endregion
+
+  schedule:
+    - cron: '0 0 1 * *' # Chaque 1er du mois
+
+jobs:
+  upgrade:
+    name: Upgrade
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+
+    outputs:
+      pull-request-branch: ${{ steps.cpr.outputs.pull-request-branch }}
+
+    steps:
+      - name: Checkout pnpm repo
+        uses: 'chlbri/pnpmi-action@main'
+
+      - name: Upgrade
+        run: pnpm run upgrade
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        id: cpr
+        with:
+          branch: auto/upgrade
+          sign-commits: true
+          branch-suffix: short-commit-hash
+
+  ci:
+    needs: upgrade
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+
+    uses: ./.github/workflows/ci.yml
+    with:
+      branch: ${{ needs.upgrade.outputs.pull-request-branch }}

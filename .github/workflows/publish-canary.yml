@@ -1,13 +1,12 @@
-name: Publish
+name: Publish-canary
 on:
   push:
     branches:
-      - master
-      - main
+      - canary
 
 jobs:
   publish:
-    name: Publish
+    name: Publish-canary
     runs-on: ubuntu-latest
 
     steps:
@@ -56,7 +55,8 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
-          strategy: upgrade
+          strategy: all
+          tag: canary
 
       - name: Check - updated
         if: ${{ steps.publish.outputs.type }}

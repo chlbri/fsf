@@ -1,0 +1,28 @@
+name: PNPM-CACHE
+on:
+  - workflow_call
+  - workflow_dispatch
+
+jobs:
+  cache:
+    name: PNPM_CACHE
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup node for publication
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          always-auth: true
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@bemedev'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        id: pnpm-install
+        with:
+          version: 10
+          run_install: true

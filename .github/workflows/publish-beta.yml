@@ -1,13 +1,12 @@
-name: Publish
+name: Publish-beta
 on:
   push:
     branches:
-      - master
-      - main
+      - beta
 
 jobs:
   publish:
-    name: Publish
+    name: Publish-beta
     runs-on: ubuntu-latest
 
     steps:
@@ -56,7 +55,8 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
-          strategy: upgrade
+          strategy: all
+          tag: beta
 
       - name: Check - updated
         if: ${{ steps.publish.outputs.type }}
