@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 export type Undy<T> = T extends null ? Exclude<T, null> | undefined : T;
 
-/* eslint-disable @typescript-eslint/ban-types */
 export type StateFunction<TC = any, TA = any, R = void> = (
   context: TC,
   events: Undy<TA>,
@@ -224,8 +222,8 @@ export type GetActionsFromPromises<
       ? GetActionsBySRC<S, Invoke, TC>
       : Invoke extends SRC[]
         ? GetActionsBySRC<S, Invoke[number], TC>
-        : {}
-    : {});
+        : unknown
+    : unknown);
 
 export type GetActionsFromState<
   ST extends State,
@@ -296,14 +294,14 @@ export type GetGuardsFromSRC<
   TC extends object = object,
 > = (GetGuardKeysFromTransition<Invoke['then']> extends infer ThenKeys
   ? ThenKeys extends number
-    ? {}
+    ? unknown
     : RecordFunctions<ThenKeys, TC, S[Invoke['src']]['data'], boolean>
-  : {}) &
+  : unknown) &
   (GetGuardKeysFromTransition<Invoke['catch']> extends infer CatchKeys
     ? CatchKeys extends never
-      ? {}
+      ? unknown
       : RecordFunctions<CatchKeys, TC, S[Invoke['src']]['error'], boolean>
-    : {});
+    : unknown);
 
 export type GetGuardsFromPromiseState<
   ST extends PromiseState,

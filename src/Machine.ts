@@ -447,7 +447,6 @@ export class Machine<
   };
 
   #searchState = (state: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const _state = this.#states.find(s => s.value === state)!;
     return _state;
   };

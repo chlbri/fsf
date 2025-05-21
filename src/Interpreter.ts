@@ -62,13 +62,11 @@ export class Interpreter<
     const states = this.machine.props._states;
     const initial = this.machine.props.initial;
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const findInitial = states.find(state => state.value === initial)!;
     this._currentState = findInitial;
   };
 
   protected readonly _setCurrentState = (value: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const out = this.machine.props._states.find(
       _state => _state.value === value,
     )!;
@@ -77,7 +75,6 @@ export class Interpreter<
 
   #rinit = (events?: TA) => {
     this.#events = events ?? this.#events;
-    this.#events;
     this.#hasNext = true;
     this._context = this.#parseContext();
     this._setCurrentState(this.#machine.props.initial);
@@ -115,7 +112,6 @@ export class Interpreter<
     let iterator = this.#rinit(events[0]);
 
     while (this.#hasNext) {
-      this.#hasNext;
       this.#next();
       iterator++;
       if (iterator >= this.#overflow) {
@@ -123,7 +119,6 @@ export class Interpreter<
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return this.#data!;
   };
 
@@ -134,12 +129,10 @@ export class Interpreter<
       await this.#nextAsync();
       iterator++;
       if (iterator >= this.#overflow) {
-        iterator;
         throw new Error('Overflow transitions');
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return this.#data!;
   };
 }

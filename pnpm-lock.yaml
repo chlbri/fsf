@@ -33,6 +33,12 @@ importers:
       '@bemedev/zod-extended':
         specifier: ^0.1.6
         version: 0.1.6(zod@3.25.17)
+      '@eslint/eslintrc':
+        specifier: ^3.3.1
+        version: 3.3.1
+      '@eslint/js':
+        specifier: ^9.27.0
+        version: 9.27.0
       '@types/object.omit':
         specifier: ^3.0.3
         version: 3.0.3
@@ -63,6 +69,9 @@ importers:
       glob:
         specifier: ^11.0.2
         version: 11.0.2
+      globals:
+        specifier: ^16.1.0
+        version: 16.1.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -1072,6 +1081,10 @@ packages:
 
   globals@14.0.0:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
+    engines: {node: '>=18'}
+
+  globals@16.1.0:
+    resolution: {integrity: sha512-aibexHNbb/jiUSObBgpHLj+sIuUmJnYcgXBlrfsiDZ9rt4aF2TFRbyLgZ2iFQuVZ1K5Mx3FVkbKRSgKrbK3K2g==}
     engines: {node: '>=18'}
 
   globby@11.1.0:
@@ -2880,6 +2893,8 @@ snapshots:
       path-scurry: 2.0.0
 
   globals@14.0.0: {}
+
+  globals@16.1.0: {}
 
   globby@11.1.0:
     dependencies:

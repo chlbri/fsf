@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { expect, test } from 'vitest';
 import { createConfig, createLogic } from './createLogic';
 

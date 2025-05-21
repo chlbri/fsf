@@ -1,3 +1,1 @@
-echo "didi"
-# pnpm run ci
-# git add .
+npm run ci
