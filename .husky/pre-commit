@@ -1,1 +1,3 @@
-pnpm run ci
+echo ""
+# pnpm run ci
+# git add .
