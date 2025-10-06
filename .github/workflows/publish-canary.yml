@@ -11,12 +11,12 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.6
 
       - name: Setup node for publication
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '20'
           always-auth: true
           registry-url: 'https://registry.npmjs.org'
           scope: '@bemedev'
@@ -25,7 +25,7 @@ jobs:
         uses: pnpm/action-setup@v4
         id: pnpm-install
         with:
-          version: 10
+          version: 9
           run_install: false
 
       - name: Get pnpm store directory
@@ -57,11 +57,13 @@ jobs:
           access: public
           strategy: all
           tag: canary
-
       - name: Check - updated
         if: ${{ steps.publish.outputs.type }}
-        run: echo "Version changed!"
+        run:
+          echo "${{ steps.publish.outputs.name }} Version changed from ${{
+          steps.publish.outputs.old-version }} to ${{
+          steps.publish.outputs.version }}"
 
       - name: Check - not updated
         if: ${{ ! steps.publish.outputs.type }}
-        run: echo "Remain the same!"
+        run: echo "Remain the same! - ${{ steps.publish.outputs.version }}"

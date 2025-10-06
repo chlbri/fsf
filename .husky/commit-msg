@@ -1,0 +1,14 @@
+# Récupère le message de commit depuis le fichier passé en paramètre
+commit_msg_file="$1"
+commit_msg=$(cat "$commit_msg_file")
+
+echo "Vérification du message de commit msg : $commit_msg"
+
+# Vérifie si le message contient "_NO_CI"
+if echo "$commit_msg" | grep -q "\_NO\_CI"; then
+  echo "🚫 Tests ignorés : _NO_CI détecté dans le message de commit"
+  exit 0
+fi
+
+npm run ci
+echo "✅ Tests réussis 😎"
