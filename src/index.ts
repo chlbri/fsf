@@ -6,7 +6,6 @@ export {
   returnTrue,
   voidNothing,
 } from './helpers';
-export * from './interpret';
-export * from './Interpreter';
+export * from './interpreter';
 export * from './Machine';
 export * from './types';

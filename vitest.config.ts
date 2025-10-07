@@ -24,14 +24,21 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    passWithNoTests: true,
+    bail: 10,
+    maxConcurrency: 10,
+    logHeapUsage: true,
 
     coverage: {
       enabled: true,
       extension: 'ts',
-      reportsDirectory: '.coverage',
       all: true,
       provider: 'v8',
-      skipFull: true,
+      reportsDirectory: '.coverage',
+    },
+    typecheck: {
+      enabled: true,
+      ignoreSourceErrors: true,
     },
   },
 });

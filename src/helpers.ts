@@ -6,7 +6,6 @@ import {
   PromiseStateDefinition,
   SimpleStateDefinition,
   StateDefinition,
-  Transition,
 } from './types';
 
 //ignore coverage
@@ -43,13 +42,6 @@ export function deepClone<T = any>(obj: T, hash = new WeakMap()): T {
       [key]: deepClone(_obj[key], hash),
     })),
   );
-}
-
-export function isTransition(value: any): value is Transition {
-  const check1 = typeof value === 'string';
-  const check2 = 'target' in value && typeof value.target === 'string';
-
-  return check1 || check2;
 }
 
 export function isReadonlyArray(array: any): array is ReadonlyArray<any> {

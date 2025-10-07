@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { createLogic } from './createLogic';
-import { interpret } from './interpret';
+import { interpret } from './interpreter';
 
 test('#1: Overflow transitions', () => {
   const machine = createLogic({

@@ -85,7 +85,7 @@ export class Machine<
 
   get safe() {
     if (this.hasErrors) {
-      throw new Error(this.errors[0]);
+      throw new Error(this.#errors[0]);
     }
     return this;
   }
@@ -102,7 +102,7 @@ export class Machine<
         acc.push(guard);
       } else {
         const _guards = this.#assignGuards(value, guards);
-        acc.push(_guards as any);
+        if (_guards) acc.push(_guards as any);
       }
       return acc;
     }, []);
@@ -112,9 +112,7 @@ export class Machine<
     values?: Guards,
     guards?: Options<ST, S, TA, TC, R>['guards'],
   ): GuardDefs<Undy<TA>, TC> | undefined => {
-    if (!values) {
-      return;
-    }
+    if (!values) return;
     if (!guards) {
       this.#errors.push('No guards provided');
       return;

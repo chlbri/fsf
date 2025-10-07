@@ -1,0 +1,88 @@
+//Create task to start npm build at the opening
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "pull",
+      "type": "shell",
+      "command": "git pull",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "clear": false,
+        "close": true
+      },
+      "hide": true,
+      "runOptions": {
+        "runOn": "folderOpen",
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "pnpm:install",
+      "type": "npm",
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared",
+        "clear": false,
+        "close": true
+      },
+      "script": "config",
+      "isBackground": true,
+      "detail": "Install deps",
+      "hide": true,
+      "dependsOn": "pull",
+      "runOptions": {
+        "runOn": "folderOpen",
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "pnpm:lint",
+      "type": "npm",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "new",
+        "clear": true,
+        "close": true
+      },
+      "script": "lint",
+      "isBackground": false,
+      "hide": true,
+      "detail": "Lint the package",
+      "dependsOn": "pnpm:install",
+      "runOptions": {
+        "runOn": "folderOpen",
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "pnpm:test",
+      "type": "npm",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "group": "test",
+        "clear": true,
+        "close": true
+      },
+      "group": "test",
+      "script": "test",
+      "isBackground": false,
+      "detail": "Test the package",
+      "dependsOn": "pnpm:lint",
+      "runOptions": {
+        "runOn": "folderOpen",
+        "instanceLimit": 1
+      }
+    }
+  ]
+}

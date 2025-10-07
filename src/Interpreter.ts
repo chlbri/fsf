@@ -5,7 +5,7 @@ export type InterpreterOptions = {
   overflow?: number;
 };
 
-export class Interpreter<
+class Interpreter<
   const ST extends Record<string, State>,
   TA = any,
   TC extends Record<string, unknown> = Record<string, unknown>,
@@ -25,8 +25,8 @@ export class Interpreter<
   readonly #overflow: number;
   protected _currentState!: StateDefinition<TA, TC>;
   #hasNext = true;
-  #machine: Machine<ST, TA, TC, R, S, Async>;
-  #errors: string[];
+  readonly #machine: Machine<ST, TA, TC, R, S, Async>;
+  readonly #errors: string[];
   // #endregion
 
   #parseContext = () => {
@@ -135,4 +135,31 @@ export class Interpreter<
 
     return this.#data!;
   };
+}
+
+export { type Interpreter };
+
+type ReturnAsync<Async extends boolean, TA, R> = true extends Async
+  ? (...events: Param<TA>) => Promise<NonNullable<R>>
+  : (...events: Param<TA>) => NonNullable<R>;
+
+export function interpret<
+  const ST extends Record<string, State>,
+  TA = any,
+  TC extends Record<string, unknown> = Record<string, unknown>,
+  R = TC,
+  const S extends Record<string, { data: any; error: any }> = Record<
+    string,
+    { data: any; error: any }
+  >,
+  Async extends boolean = false,
+>(
+  machine: Machine<ST, TA, TC, R, S, Async>,
+  options?: InterpreterOptions,
+): ReturnAsync<Async, TA, R> {
+  const interpreter = new Interpreter(machine, options);
+  const async = machine.__options.async;
+  return (
+    !async ? interpreter.build : interpreter.buildAsync
+  ) as ReturnAsync<Async, TA, R>;
 }

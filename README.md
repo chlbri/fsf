@@ -59,7 +59,6 @@ with the
 | Eventless transitions       |         ✅         |
 | Nested states               |         ❌         |
 | Parallel states             |         ❌         |
-| History states              |         ❌         |
 | Final states                |         ✅         |
 | Context                     |         ✅         |
 | Entry actions               |         ✅         |
@@ -69,16 +68,8 @@ with the
 | Transition guards           |         ✅         |
 | Parameterized guards        |         ✅         |
 | Asynchronous                |         ❌         |
-| Spawned actors              |         ❌         |
 
 <br/>
-
-#### **NB: Only for sync functions**
-
-If you want to use statechart features such as nested states, parallel
-states, history states, activities, invoked services, delayed transitions,
-transient transitions, etc. please use
-[<u>XState</u>](https://github.com/statelyai/xstate). <br/>
 
 ## Quick start
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { createConfig, createLogic } from './createLogic';
-import { interpret } from './interpret';
+import { interpret } from './interpreter';
 
 describe('#1: explicit returns, (tidious guards)', () => {
   const machine = createLogic(
