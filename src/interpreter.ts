@@ -143,6 +143,7 @@ type ReturnAsync<Async extends boolean, TA, R> = true extends Async
   ? (...events: Param<TA>) => Promise<NonNullable<R>>
   : (...events: Param<TA>) => NonNullable<R>;
 
+// Difficult
 export function interpret<
   const ST extends Record<string, State>,
   TA = any,
