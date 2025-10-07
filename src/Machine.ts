@@ -466,23 +466,20 @@ export class Machine<
     const _events = this.#unFreezeArgs
       ? events
       : (Object.freeze(events) as any);
-    let hasNext = true;
+    let hasNext = false;
+    let target: string | undefined = undefined;
+
     if (isFinalStateDefinition(current)) {
       current.entry.forEach(entry => entry(context, _events));
       data = current.data(context, _events);
-      hasNext = false;
     } else if (isSimpleStateDefinition(current)) {
       current.entry.forEach(entry => entry(context, _events));
 
-      state = this.#runTransitions(
-        current.transitions,
-        context,
-        _events,
-        state,
-      );
+      target = this.#runTransitions(current.transitions, context, _events);
       current.exit.forEach(entry => entry(context, _events));
+      hasNext = !!target;
     }
-    return { state, context, data, hasNext };
+    return { state: target, context, data, hasNext };
   };
 
   /**
@@ -498,15 +495,11 @@ export class Machine<
     const current = this.#searchState(state);
     let data: R | undefined = undefined;
     const _events = this.#unFreezeArgs ? events : Object.freeze(events);
+    let target: string | undefined = undefined;
 
     let hasNext = true;
     if (isPromiseStateDefinition(current)) {
-      state = await this.#resolveStatePromise(
-        current,
-        context,
-        _events,
-        state,
-      );
+      target = await this.#resolveStatePromise(current, context, _events);
     } else {
       const {
         data: _data,
@@ -520,17 +513,17 @@ export class Machine<
 
       data = _data;
       hasNext = _hasNext;
-      state = _state;
+      target = _state;
     }
-    return { state, context, data, hasNext };
+    return { state: target, context, data, hasNext };
   };
 
   #runTransitions(
     transitions: TransitionDefinition<TC, TA>[],
     context: TC,
     _events: any,
-    state: string,
   ) {
+    let target: string | undefined = undefined;
     for (const transition of transitions) {
       const _cond = transition.cond;
       if (_cond) {
@@ -539,37 +532,37 @@ export class Machine<
       }
       transition.actions.forEach(action => action(context, _events));
 
-      state = transition.target;
+      target = transition.target;
       break;
     }
-    return state;
+    return target;
   }
 
-  async #resolveStatePromise(
+  #resolveStatePromise = async (
     current: PromiseStateDefinition<TA, TC, any>,
     context: TC,
     _events: any,
-    state: string,
-  ) {
+  ): Promise<string | undefined> => {
     current.entry.forEach(entry => entry(context, _events));
+    let target: string | undefined = undefined;
 
     for await (const promise of current.invoke) {
       const { src, catch: _catch, then, finally: _finally } = promise;
       if (src) {
         await src(context, _events)
           .then(awaited => {
-            state = this.#runTransitions(then, context, awaited, state);
+            target = this.#runTransitions(then, context, awaited);
           })
           .catch(reason => {
-            state = this.#runTransitions(_catch, context, reason, state);
+            target = this.#runTransitions(_catch, context, reason);
           })
           .finally(() => {
             _finally.forEach(entry => entry(context, _events));
           });
       }
     }
-    return state;
-  }
+    return target;
+  };
 }
 
 export type ExtractTypestateFromMachine<C extends Machine<any>> =

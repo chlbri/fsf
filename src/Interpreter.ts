@@ -90,7 +90,7 @@ export class Interpreter<
 
     this._context = context;
     this.#hasNext = hasNext;
-    this._setCurrentState(state);
+    this._setCurrentState(state ?? this._currentState.value);
     this.#data = data;
   };
 
@@ -104,7 +104,7 @@ export class Interpreter<
 
     this._context = context;
     this.#hasNext = hasNext;
-    this._setCurrentState(state);
+    this._setCurrentState(state ?? this._currentState.value);
     this.#data = data;
   };
 

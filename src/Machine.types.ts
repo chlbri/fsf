@@ -42,7 +42,7 @@ type NextResult<
   TC extends Record<string, unknown> = Record<string, unknown>,
   R = TC,
 > = {
-  state: string;
+  state?: string;
   context: TC;
   data?: R;
   hasNext: boolean;
