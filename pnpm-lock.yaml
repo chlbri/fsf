@@ -21,6 +21,9 @@ importers:
       '@bemedev/return-data':
         specifier: ^0.3.2
         version: 0.3.2(zod@4.1.12)
+      '@bemedev/rollup-config':
+        specifier: ^0.2.2
+        version: 0.2.2(glob@11.0.3)(rollup@4.52.4)(typescript@5.9.3)
       '@bemedev/vitest-alias':
         specifier: ^0.0.3
         version: 0.0.3(vitest@3.2.4(@types/node@24.7.0)(jiti@2.6.1))
@@ -185,6 +188,13 @@ packages:
     engines: {node: '>=20'}
     peerDependencies:
       zod: ^3.23.6
+
+  '@bemedev/rollup-config@0.2.2':
+    resolution: {integrity: sha512-bpJgtRVYtGaHYPglG+6zJQZaf0ijqx5gTbOvgXNIq5Nsud9p7aa+MMzFMNxd9DONGuq2Y0Z/8mAR2GsEe2kLWA==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      glob: ^11.0.1
+      rollup: ^4.32.1
 
   '@bemedev/sleep@0.1.2':
     resolution: {integrity: sha512-GLbDKkDqPdbO1WldnXZs6Wi1Fhk6lfz2DhCEPWSiezhRym9IMvksyaqdfQyyWvYg3OS1umKjaHOAiEF6++HiTA==}
@@ -890,6 +900,10 @@ packages:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
 
+  chalk@5.3.0:
+    resolution: {integrity: sha512-dLitG79d+GV1Nb/VYcCDFivJeK1hiukt9QjRNVOsUtTy1rR1YJsmpGGTZ3qJos+uw7WmWF4wUwBd9jxjocFC2w==}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+
   check-error@2.1.1:
     resolution: {integrity: sha512-OAlb+T7V4Op9OwdkjmguYRqncdlx5JiofwOAUkmTF+jNdHwzTaTs4sRAGpzLF3oOz5xAyDGrPgeIDFQmDOTiJw==}
     engines: {node: '>= 16'}
@@ -1394,6 +1408,9 @@ packages:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
 
+  lodash-es@4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
+
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
 
@@ -1742,10 +1759,30 @@ packages:
     engines: {node: 20 || >=22}
     hasBin: true
 
+  rollup-plugin-circular-dependencies@1.1.2:
+    resolution: {integrity: sha512-0XF698157VE4IKHO2vu6nDknUx/320+/V7AXe3cGznKwFkoiRjJPZm39ARU6uqbpPLfOQpDjssFOypzo5f9iog==}
+    engines: {node: '>=18.19'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+
+  rollup-plugin-node-externals@8.1.1:
+    resolution: {integrity: sha512-MEWJmXMGjo5E7o9hgAmma6XLCdU9gTVRcaaCubugTJdoJD3A91qxtxiukT9k2PeUdogtCaNehV3pvJUWrRNtwg==}
+    engines: {node: '>= 21 || ^20.6.0 || ^18.19.0'}
+    peerDependencies:
+      rollup: ^4.0.0
+
   rollup-plugin-tsc-alias@1.1.4:
     resolution: {integrity: sha512-XfoYBpkxV3C8hv1plWbLJC1oXmOFheoOL20KhQ7LMJf5LyvGSxL2xE81ezuYfcZfWuqFTn/SfiORyaiV4qS6+A==}
     peerDependencies:
       rollup: '> 2.0'
+
+  rollup-plugin-tsconfig-paths@1.5.2:
+    resolution: {integrity: sha512-tyS7u2Md0eXKwbDfTuDDa1izciwqhOZsHzX7zYc5gKC1L7q5ozdSt+q1jjtD1dDqWyjrt8lZoiLtOQGhMHh1OQ==}
+    peerDependencies:
+      rollup: ^2 || ^3 || ^4
 
   rollup-plugin-typescript2@0.36.0:
     resolution: {integrity: sha512-NB2CSQDxSe9+Oe2ahZbf+B4bh7pHwjV5L+RSYpCu7Q5ROuN94F9b6ioWwKfz3ueL3KTtmX4o2MUH2cgHDIEUsw==}
@@ -1976,6 +2013,11 @@ packages:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
 
+  typescript-paths@1.5.1:
+    resolution: {integrity: sha512-lYErSLCON2MSplVV5V/LBgD4UNjMgY3guATdFCZY2q1Nr6OZEu4q6zX/rYMsG1TaWqqQSszg6C9EU7AGWMDrIw==}
+    peerDependencies:
+      typescript: ^4.7.2 || ^5
+
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
@@ -2175,6 +2217,18 @@ snapshots:
   '@bemedev/return-data@0.3.2(zod@4.1.12)':
     dependencies:
       zod: 4.1.12
+
+  '@bemedev/rollup-config@0.2.2(glob@11.0.3)(rollup@4.52.4)(typescript@5.9.3)':
+    dependencies:
+      glob: 11.0.3
+      rollup: 4.52.4
+      rollup-plugin-circular-dependencies: 1.1.2(rollup@4.52.4)
+      rollup-plugin-node-externals: 8.1.1(rollup@4.52.4)
+      rollup-plugin-tsc-alias: 1.1.4(rollup@4.52.4)
+      rollup-plugin-tsconfig-paths: 1.5.2(rollup@4.52.4)(typescript@5.9.3)
+      rollup-plugin-typescript2: 0.36.0(rollup@4.52.4)(typescript@5.9.3)
+    transitivePeerDependencies:
+      - typescript
 
   '@bemedev/sleep@0.1.2': {}
 
@@ -2784,6 +2838,8 @@ snapshots:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
+  chalk@5.3.0: {}
+
   check-error@2.1.1: {}
 
   chokidar@3.6.0:
@@ -3305,6 +3361,8 @@ snapshots:
     dependencies:
       p-locate: 5.0.0
 
+  lodash-es@4.17.21: {}
+
   lodash.merge@4.6.2: {}
 
   log-symbols@4.1.0:
@@ -3615,10 +3673,28 @@ snapshots:
       glob: 11.0.3
       package-json-from-dist: 1.0.1
 
+  rollup-plugin-circular-dependencies@1.1.2(rollup@4.52.4):
+    dependencies:
+      chalk: 5.3.0
+      lodash-es: 4.17.21
+    optionalDependencies:
+      rollup: 4.52.4
+
+  rollup-plugin-node-externals@8.1.1(rollup@4.52.4):
+    dependencies:
+      rollup: 4.52.4
+
   rollup-plugin-tsc-alias@1.1.4(rollup@4.52.4):
     dependencies:
       rollup: 4.52.4
       tsc-alias: 1.8.16
+
+  rollup-plugin-tsconfig-paths@1.5.2(rollup@4.52.4)(typescript@5.9.3):
+    dependencies:
+      rollup: 4.52.4
+      typescript-paths: 1.5.1(typescript@5.9.3)
+    transitivePeerDependencies:
+      - typescript
 
   rollup-plugin-typescript2@0.36.0(rollup@4.52.4)(typescript@5.9.3):
     dependencies:
@@ -3861,6 +3937,10 @@ snapshots:
   type-fest@0.6.0: {}
 
   type-fest@0.8.1: {}
+
+  typescript-paths@1.5.1(typescript@5.9.3):
+    dependencies:
+      typescript: 5.9.3
 
   typescript@5.9.3: {}
 
