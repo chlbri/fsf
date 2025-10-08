@@ -1,31 +1,24 @@
 import {
-  Config,
-  Options,
-  OptionsM,
   PromiseState,
-  State,
   StateDefinition,
   Transition,
   TransitionArray,
   TransitionDefinition,
 } from './types';
+import type { Config, ConfigTypes, Options } from './types2';
 
 export type MarchineArgs<
-  ST extends Record<string, State>,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  TA = any,
-  TC extends Record<string, unknown> = Record<string, unknown>,
+  C extends Config,
+  T extends ConfigTypes<C> = ConfigTypes<C>,
+  TA = T['events'],
+  TC extends T['context'] = T['context'],
   R = TC,
-  Async extends boolean = false,
 > = {
   _states: StateDefinition<TA, TC, R>[];
   initial: string;
   context: TC;
-  config: Config<ST, TA, TC, R>;
-  options?: Options<ST, S, TA, TC, R, Async>;
+  config: C;
+  options?: Options<C, T, R>;
   // test?: boolean;
 };
 
@@ -61,18 +54,13 @@ export type NextFunctionAsync<
 > = (props: NextArgs<TA, TC>) => Promise<NextResult<TC, R>>;
 
 export type ExtractFunctionProps<
-  ST extends Record<string, State> = Record<string, State>,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  TC extends object = object,
-  TA = any,
-  R = any,
-  Async extends boolean = false,
+  C extends Config,
+  T extends ConfigTypes<C> = ConfigTypes<C>,
+  TC extends T['context'] = T['context'],
+  R = TC,
 > = {
   source: string;
-  options?: Omit<Options<ST, S, TA, TC, R, Async>, 'overflow' | 'datas'>;
+  options?: Omit<Options<C, T, R>, 'overflow' | 'datas'>;
   __keys: string[];
 };
 
@@ -81,50 +69,35 @@ export type ExtractFunction<TC extends object = object, TA = any> = (
 ) => TransitionDefinition<TC, TA>;
 
 export type PropsExtractorTransition<
-  ST extends Record<string, State> = Record<string, State>,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  TC extends object = object,
-  TA = any,
-  R = any,
-  Async extends boolean = boolean,
+  C extends Config,
+  T extends ConfigTypes<C> = ConfigTypes<C>,
+  TC extends T['context'] = T['context'],
+  R = TC,
 > = {
   source: string;
   always: Transition | TransitionArray;
-  options?: Omit<Options<ST, S, TA, TC, R, Async>, 'overflow' | 'datas'>;
+  options?: Omit<Options<C, T, R>, 'overflow' | 'datas'>;
   __keys: string[];
 };
 
 export type PropsExtractorPromise<
-  ST extends Record<string, State> = Record<string, State>,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  TC extends object = object,
-  TA = any,
-  R = any,
-  Async extends boolean = false,
+  C extends Config,
+  T extends ConfigTypes<C> = ConfigTypes<C>,
+  TC extends T['context'] = T['context'],
+  R = TC,
 > = {
   source: string;
   promises: PromiseState['invoke'];
-  options?: Omit<Options<ST, S, TA, TC, R, Async>, 'overflow' | 'datas'>;
+  options?: Omit<Options<C, T, R>, 'overflow' | 'datas'>;
   __keys: string[];
 };
 
 export type CloneArgs<
-  ST extends Record<string, State>,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  TA = any,
-  TC extends Record<string, unknown> = Record<string, unknown>,
+  C extends Config,
+  T extends ConfigTypes<C> = ConfigTypes<C>,
+  TC extends T['context'] = T['context'],
   R = TC,
-  Async extends boolean = false,
 > = {
-  config?: Partial<Config<ST, TA, TC, R>>;
-  options?: OptionsM<ST, S, TA, TC, R, Async>;
+  config?: Partial<Config>;
+  options?: Options<C, T, R>;
 };

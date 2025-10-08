@@ -1,45 +1,34 @@
 import { Machine } from './Machine';
-import { Param, State, StateDefinition } from './types';
+import { Param, StateDefinition } from './types';
+import type { Config, ConfigTypes, isAsyncConfig } from './types2';
 
 export type InterpreterOptions = {
   overflow?: number;
 };
 
 class Interpreter<
-  const ST extends Record<string, State>,
-  TA = any,
-  TC extends Record<string, unknown> = Record<string, unknown>,
-  R = TC,
-  const S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  Async extends boolean = false,
+  const C extends Config,
+  const T extends ConfigTypes<C> = ConfigTypes<C>,
+  TA extends T['events'] = T['events'],
+  TC extends T['context'] = T['context'],
+  R extends T['data'] = T['data'],
 > {
   #events!: TA;
-  readonly #initialContext: TC;
+  #initialContext!: TC;
 
   // #region Props
   #data?: R;
   protected _context!: TC;
   readonly #overflow: number;
-  protected _currentState!: StateDefinition<TA, TC>;
+  protected _currentState!: StateDefinition<TA, TC, R>;
   #hasNext = true;
-  readonly #machine: Machine<ST, TA, TC, R, S, Async>;
+  readonly #machine: Machine<C, T>;
   readonly #errors: string[];
   // #endregion
 
-  #parseContext = () => {
-    return JSON.parse(this.#machine.__initialContext);
-  };
-
-  constructor(
-    machine: Machine<ST, TA, TC, R, S, Async>,
-    options?: InterpreterOptions,
-  ) {
+  constructor(machine: Machine<C, T>, options?: InterpreterOptions) {
     this.#machine = machine.safe;
     this.#errors = machine.errors;
-    this.#initialContext = this.#parseContext();
     this.#overflow = options?.overflow ?? 100;
     this._initializeStates();
   }
@@ -58,7 +47,7 @@ class Interpreter<
 
   protected readonly _initializeStates = () => {
     Object.freeze(this.#initialContext);
-    this._context = this.#parseContext();
+    this._context = this.#initialContext;
     const states = this.machine.props._states;
     const initial = this.machine.props.initial;
 
@@ -76,7 +65,7 @@ class Interpreter<
   #rinit = (events?: TA) => {
     this.#events = events ?? this.#events;
     this.#hasNext = true;
-    this._context = this.#parseContext();
+    this._context = structuredClone(this.#initialContext);
     this._setCurrentState(this.#machine.props.initial);
     return 0;
   };
@@ -106,6 +95,11 @@ class Interpreter<
     this.#hasNext = hasNext;
     this._setCurrentState(state ?? this._currentState.value);
     this.#data = data;
+  };
+
+  setInitialContext = (context: TC) => {
+    this.#initialContext = context;
+    Object.freeze(this.#initialContext);
   };
 
   readonly build = (...events: Param<TA>) => {
@@ -145,22 +139,15 @@ type ReturnAsync<Async extends boolean, TA, R> = true extends Async
 
 // Difficult
 export function interpret<
-  const ST extends Record<string, State>,
-  TA = any,
-  TC extends Record<string, unknown> = Record<string, unknown>,
-  R = TC,
-  const S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  Async extends boolean = false,
+  const C extends Config = Config,
+  const T extends ConfigTypes<C> = ConfigTypes<C>,
 >(
-  machine: Machine<ST, TA, TC, R, S, Async>,
+  machine: Machine<C, T, T['events'], T['context'], T['data']>,
   options?: InterpreterOptions,
-): ReturnAsync<Async, TA, R> {
-  const interpreter = new Interpreter(machine, options);
+): ReturnAsync<isAsyncConfig<C>, T['events'], T['data']> {
+  const interpreter = new Interpreter<C, T>(machine, options);
   const async = machine.__options.async;
   return (
     !async ? interpreter.build : interpreter.buildAsync
-  ) as ReturnAsync<Async, TA, R>;
+  ) as ReturnAsync<isAsyncConfig<C>, T['events'], T['data']>;
 }

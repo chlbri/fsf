@@ -1,5 +1,4 @@
 import {
-  Config,
   FinalState,
   FinalStateDefinition,
   PromiseState,
@@ -7,6 +6,7 @@ import {
   SimpleStateDefinition,
   StateDefinition,
 } from './types';
+import type { Config } from './types2';
 
 //ignore coverage
 export const voidNothing = () => void 0;

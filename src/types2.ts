@@ -1,3 +1,19 @@
+export type SingleOrArray<T = any> = T | readonly T[];
+
+type UnionToIntersection<U> = (
+  U extends any ? (x: U) => void : never
+) extends (x: infer I) => void
+  ? I
+  : never;
+
+export type RecordFunctions<
+  K,
+  TC extends object = object,
+  TA = any,
+  R = void,
+> = K extends string ? Record<K, StateFunction<TC, TA, R>> : never;
+
+export type SoA<T = any> = SingleOrArray<T>;
 export type Undy<T> = T extends null ? Exclude<T, null> | undefined : T;
 
 export type StateFunction<TC = any, TA = any, R = void> = (
@@ -5,8 +21,7 @@ export type StateFunction<TC = any, TA = any, R = void> = (
   events: Undy<TA>,
 ) => R;
 
-export type SingleOrArray<T = any> = T | readonly T[];
-export type SoA<T = any> = SingleOrArray<T>;
+export type SAS = SingleOrArray<string>;
 
 // #region Guards
 
@@ -18,64 +33,6 @@ export type Guards = SingleOrArray<GuardUnion>;
 export type GuardDef<TA = any, TC = any> = StateFunction<TC, TA, boolean>;
 
 // #endregion
-
-export type TransitionDefinition<TC = any, TA = any> = {
-  target: string;
-  source: string;
-  actions: StateFunction<TC, TA, void>[];
-  cond?: GuardDef<TA, TC>;
-  description?: string;
-};
-
-export type BaseStateDefinition<TA = any, TC = any> = {
-  value: string;
-  entry: StateFunction<TC, TA, void>[];
-};
-
-export type SimpleStateDefinition<
-  TA = any,
-  TC = any,
-> = BaseStateDefinition<TA, TC> & {
-  transitions: TransitionDefinition<TC, TA>[];
-  exit: StateFunction<TC, TA, void>[];
-};
-
-export type SRCDefinition<TA = any, TC = any, R = any> = {
-  then: TransitionDefinition<TC, TA>[];
-  catch: TransitionDefinition<TC, TA>[];
-  finally: StateFunction<TC, TA, void>[];
-  src?: StateFunction<TC, TA, Promise<R>>;
-  value: string;
-};
-
-export type PromiseStateDefinition<
-  TA = any,
-  TC = any,
-  R = any,
-> = BaseStateDefinition<TA, TC> & {
-  invoke: SRCDefinition<TA, TC, R>[];
-};
-
-export type FinalStateDefinition<
-  TA = any,
-  TC = any,
-  R = any,
-> = BaseStateDefinition<TA, TC> & {
-  data: StateFunction<TC, TA, R>;
-};
-
-export type StateDefinition<TA = any, TC = any, R = any> =
-  | SimpleStateDefinition<TA, TC>
-  | PromiseStateDefinition<TA, TC, any>
-  | FinalStateDefinition<TA, TC, R>;
-
-export type PromiseWithTimeout = {
-  timeoutMs: number;
-  promise: () => Promise<void>;
-  failureMessage?: string;
-};
-
-export type SAS = SingleOrArray<string>;
 
 export type TransitionObj<S extends string = string> = {
   target: S;
@@ -126,6 +83,29 @@ export type State<S extends string = string> =
   | FinalState
   | PromiseState<S>;
 
+export type Config = {
+  data?: string;
+  states: Record<string, State>;
+  initial: string;
+};
+
+export type ConfigTypes<C extends Config> = {
+  context: any;
+  events: any;
+  data: any;
+} & (C['states'][keyof C['states']] extends infer P extends PromiseState
+  ? {
+      promises: {
+        [K in GetPromiseKeysFromPromise<P>]: PromiseDef;
+      };
+    }
+  : unknown);
+
+type TT = isAsyncConfig<{
+  states: { idle: { always: 'any' }; any: { data: 'any' } };
+  initial: 'idle';
+}>;
+
 export type ConfigDef = {
   states: string;
   initial: string;
@@ -138,8 +118,15 @@ export type NoExtraKeysConfigDef<T extends ConfigDef> = T & {
 export type TransformConfigDef<T extends ConfigDef> = {
   initial: T['initial'];
   states: {
-    [K in T['states'] | T['initial']]: Transition<Exclude<T['states'], K>>;
+    [K in T['states'] | T['initial']]: T['states'] extends infer S1 extends
+      string
+      ? State<S1>
+      : State<string>;
   };
+};
+
+export type NoExtraKeysState<T extends State> = T & {
+  [K in Exclude<keyof T, keyof State>]: never;
 };
 
 export type NoExtraKeysConfig<T extends Config> = T & {
@@ -150,51 +137,17 @@ export type NoExtraKeysConfig<T extends Config> = T & {
   };
 };
 
-export type NoExtraKeysState<T extends State> = T & {
-  [K in Exclude<keyof T, keyof State>]: never;
-};
-
-export type Config<
-  ST extends Record<string, State> = Record<string, State>,
-  TA = any,
-  TC = any,
-  R = TC,
-  TP extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-> = {
-  context: TC;
-  initial: string;
-  schema: {
-    context?: TC;
-    events?: TA;
-    data: R;
-    promises?: TP;
-  };
-  data?: string;
-  states: ST;
-};
-
-export type ExtractArgsFromConfig<C extends Config> =
-  C extends Config<any, infer A> ? A : never;
-
-export type ExtractContextFromConfig<C extends Config> =
-  C extends Config<any, any, infer A> ? A : never;
-
-export type ExtractReturnFromConfig<C extends Config> =
-  C extends Config<any, any, any, infer A> ? A : never;
-
-export type ExtractServicesFromConfig<C extends Config> =
-  C extends Config<any, any, any, any, infer A> ? A : never;
-
-export type ExtractTypestateFromConfig<C extends Config> =
-  C extends Config<infer A> ? A : never;
+export type isAsyncConfig<C extends Config> = C extends {
+  states: Record<any, infer A>;
+}
+  ? A extends PromiseState
+    ? true
+    : false
+  : false;
 
 export type ExtractSOAToUnion<T extends SingleOrArray | undefined> =
   T extends undefined ? never : T extends Readonly<any> ? T[number] : T;
 
-// #region Actions for Options
 export type GetEntryActions<ST extends Record<string, State>> =
   GetEntryActionsFromState<ST[keyof ST]>;
 
@@ -219,15 +172,25 @@ export type GetActionKeysFromSimpleState<ST extends SimpleState> =
   | GetEntryActionsFromState<ST>
   | GetExitActionsFromSimpleState<ST>;
 
-export type GetPromiseKeysFromInvoke<T extends PromiseState['invoke']> =
-  T extends SRC
-    ? T['src']
-    : T extends ReadonlyArray<SRC>
-      ? T[number]['src']
-      : never;
+export type GetPromiseKeysFromPromise<T extends PromiseState> =
+  ExtractSOAToUnion<T['invoke']> extends infer U extends SRC
+    ? U['src']
+    : never;
+
+export type GetPromiseKeysFromConfig<C extends Config> =
+  Extract<
+    C['states'][keyof C['states']],
+    PromiseState
+  > extends infer P extends PromiseState
+    ? GetPromiseKeysFromPromise<P>
+    : never;
+
+type PromiseDef = { data: any; error: any };
+
+type PromiseDefs = Record<string, PromiseDef>;
 
 export type GetActionsBySRC<
-  S extends Record<string, { data: any; error: any }>,
+  S extends PromiseDefs,
   T extends SRC,
   TC extends object = object,
 > = Record<
@@ -239,43 +202,32 @@ export type GetActionsBySRC<
     StateFunction<TC, S[T['src']]['error']>
   >;
 
-export type GetActionsFromPromises<
+export type GetActionsFromPromiseState<
   ST extends PromiseState,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
+  S extends PromiseDefs = PromiseDefs,
   TC extends object = object,
   TA = any,
 > = Record<GetEntryActionsFromState<ST>, StateFunction<TC, TA, void>> &
-  (ST['invoke'] extends infer Invoke
-    ? Invoke extends SRC
-      ? GetActionsBySRC<S, Invoke, TC>
-      : Invoke extends SRC[]
-        ? GetActionsBySRC<S, Invoke[number], TC>
-        : unknown
+  (ExtractSOAToUnion<ST['invoke']> extends infer U extends SRC
+    ? GetActionsBySRC<S, U, TC>
     : unknown);
 
 export type GetActionsFromState<
   ST extends State,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
+  S extends PromiseDefs = PromiseDefs,
   TC extends object = object,
   TA = any,
 > = ST extends PromiseState
-  ? GetActionsFromPromises<ST, S, TC, TA>
+  ? GetActionsFromPromiseState<ST, S, TC, TA>
   : ST extends SimpleState
     ? Record<GetActionKeysFromSimpleState<ST>, StateFunction<TC, TA>>
     : ST extends FinalState
       ? Record<GetEntryActionsFromState<ST>, StateFunction<TC, TA>>
       : never;
-// #endregion
 
-// #region Guards for Options
+// #region Guards
 
-export type GetGuardsFromGuards<T extends Guards | undefined> =
+export type GetKeysFromGuard<T extends Guards | undefined> =
   T extends undefined
     ? never
     : T extends string
@@ -283,11 +235,11 @@ export type GetGuardsFromGuards<T extends Guards | undefined> =
       : T extends string[]
         ? T[number]
         : T extends readonly GuardUnion[]
-          ? GetGuardsFromGuards<T[number]>
+          ? GetKeysFromGuard<T[number]>
           : T extends GuardOr
-            ? GetGuardsFromGuards<T['or']>
+            ? GetKeysFromGuard<T['or']>
             : T extends GuardAnd
-              ? GetGuardsFromGuards<T['and']>
+              ? GetKeysFromGuard<T['and']>
               : never;
 
 export type GetGuardKeysFromTransition<
@@ -295,25 +247,19 @@ export type GetGuardKeysFromTransition<
 > = T extends string
   ? never
   : T extends TransitionObj
-    ? GetGuardsFromGuards<T['cond']>
+    ? GetKeysFromGuard<T['cond']>
     : T extends TransitionArray
       ? GetGuardKeysFromTransition<T[number]>
       : never;
-
-export type RecordFunctions<
-  K,
-  TC extends object = object,
-  TA = any,
-  R = void,
-> = K extends string ? Record<K, StateFunction<TC, TA, R>> : never;
 
 export type GetGuardsFromSimpleState<
   ST extends SimpleState,
   TC extends object = object,
   TA = any,
 > =
-  GetGuardKeysFromTransition<ST['always']> extends infer Keys
-    ? Record<Keys & string, StateFunction<TC, TA, boolean>>
+  GetGuardKeysFromTransition<ST['always']> extends infer Keys extends
+    string
+    ? Record<Keys, StateFunction<TC, TA, boolean>>
     : never;
 
 export type GetGuardsFromSRC<
@@ -349,66 +295,78 @@ export type GetGuardsFromPromiseState<
       : never
   : never;
 
-// #endregion
-
-type UnionToIntersection<U> = (
-  U extends any ? (x: U) => void : never
-) extends (x: infer I) => void
-  ? I
-  : never;
-
-export type Options<
-  ST extends Record<string, State> = Record<string, State>,
+export type GetGuardsFromState<
+  ST extends State,
   S extends Record<string, { data: any; error: any }> = Record<
     string,
     { data: any; error: any }
   >,
-  TA = any,
   TC extends object = object,
-  R = TC,
-  Async extends boolean = false,
+  TA = any,
+> = ST extends SimpleState
+  ? GetGuardsFromSimpleState<ST, TC, TA>
+  : ST extends PromiseState
+    ? GetGuardsFromPromiseState<ST, S, TC>
+    : never;
+
+// #endregion
+
+export type ExtractDataKeysFromConfig<C extends Config> = (C extends {
+  data: infer D;
+}
+  ? D
+  : never) &
+  (Extract<
+    C['states'][keyof C['states']],
+    FinalState
+  > extends infer F extends FinalState
+    ? F['data']
+    : never);
+
+export type Options<
+  C extends Config,
+  T extends ConfigTypes<C>,
+  R = T['context'],
+  T1 extends T & { promises: {} } = T & { promises: {} },
 > = {
-  actions?: Partial<
-    UnionToIntersection<GetActionsFromState<ST[keyof ST], S, TC, TA>>
-  >;
-  guards?: Record<string, StateFunction<TC, TA, boolean>>;
-  datas?: Record<string, StateFunction<TC, TA, R>>;
-  promises?: Record<string, StateFunction<TC, TA, Promise<any>>>;
   overflow?: number;
   strict?: boolean;
   unFreezeArgs?: boolean;
-  async?: Async;
+  async?: isAsyncConfig<C>;
+
+  datas?: Partial<
+    UnionToIntersection<
+      Record<
+        ExtractDataKeysFromConfig<C>,
+        StateFunction<T['context'], T['events'], R>
+      >
+    >
+  >;
+
+  actions?: Partial<
+    UnionToIntersection<
+      GetActionsFromState<
+        C['states'][keyof C['states']],
+        T1['promises'],
+        T['context'],
+        T['events']
+      >
+    >
+  >;
+
+  guards?: Partial<
+    UnionToIntersection<
+      GetGuardsFromState<
+        C['states'][keyof C['states']],
+        T1['promises'],
+        T['context'],
+        T['events']
+      >
+    >
+  >;
+
+  promises?: Record<
+    GetPromiseKeysFromConfig<C>,
+    StateFunction<T['context'], T['events'], Promise<any>>
+  >;
 };
-
-export type OptionsM<
-  ST extends Record<string, State> = Record<string, State>,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  TA = any,
-  TC extends object = object,
-  R = TC,
-  Async extends boolean = false,
-> = Options<ST, S, TA, TC, R, Async> & { async: Async };
-
-export type OptionsFromConfig<C extends Config> = Options<
-  ExtractArgsFromConfig<C>,
-  ExtractContextFromConfig<C>,
-  ExtractReturnFromConfig<C>
->;
-
-export type IsAsyncState<C extends Record<string, State>> =
-  C extends Record<any, infer A>
-    ? A extends PromiseState
-      ? true
-      : false
-    : never;
-
-export type IsAsyncConfig<C extends Config> = IsAsyncState<
-  ExtractTypestateFromConfig<C>
->;
-
-export type Primitives = string | number | boolean;
-
-export type Param<T> = T extends null ? [Exclude<T, null>?] : [T];
