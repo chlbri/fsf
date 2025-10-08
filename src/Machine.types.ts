@@ -1,24 +1,24 @@
-import {
+import type {
+  Config,
+  ConfigTypes,
+  Options,
   PromiseState,
   StateDefinition,
   Transition,
   TransitionArray,
   TransitionDefinition,
 } from './types';
-import type { Config, ConfigTypes, Options } from './types2';
 
 export type MarchineArgs<
   C extends Config,
   T extends ConfigTypes<C> = ConfigTypes<C>,
-  TA = T['events'],
-  TC extends T['context'] = T['context'],
-  R = TC,
+  R = T['context'],
 > = {
-  _states: StateDefinition<TA, TC, R>[];
+  _states: StateDefinition<T['events'], T['context'], R>[];
   initial: string;
-  context: TC;
+  context: T['context'];
   config: C;
-  options?: Options<C, T, R>;
+  options?: Options<C, T>;
   // test?: boolean;
 };
 
@@ -56,11 +56,9 @@ export type NextFunctionAsync<
 export type ExtractFunctionProps<
   C extends Config,
   T extends ConfigTypes<C> = ConfigTypes<C>,
-  TC extends T['context'] = T['context'],
-  R = TC,
 > = {
   source: string;
-  options?: Omit<Options<C, T, R>, 'overflow' | 'datas'>;
+  options?: Omit<Options<C, T>, 'overflow' | 'datas'>;
   __keys: string[];
 };
 
@@ -71,33 +69,27 @@ export type ExtractFunction<TC extends object = object, TA = any> = (
 export type PropsExtractorTransition<
   C extends Config,
   T extends ConfigTypes<C> = ConfigTypes<C>,
-  TC extends T['context'] = T['context'],
-  R = TC,
 > = {
   source: string;
   always: Transition | TransitionArray;
-  options?: Omit<Options<C, T, R>, 'overflow' | 'datas'>;
+  options?: Omit<Options<C, T>, 'overflow' | 'datas'>;
   __keys: string[];
 };
 
 export type PropsExtractorPromise<
   C extends Config,
   T extends ConfigTypes<C> = ConfigTypes<C>,
-  TC extends T['context'] = T['context'],
-  R = TC,
 > = {
   source: string;
   promises: PromiseState['invoke'];
-  options?: Omit<Options<C, T, R>, 'overflow' | 'datas'>;
+  options?: Omit<Options<C, T>, 'overflow' | 'datas'>;
   __keys: string[];
 };
 
 export type CloneArgs<
   C extends Config,
   T extends ConfigTypes<C> = ConfigTypes<C>,
-  TC extends T['context'] = T['context'],
-  R = TC,
 > = {
   config?: Partial<Config>;
-  options?: Options<C, T, R>;
+  options?: Options<C, T>;
 };

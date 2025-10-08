@@ -18,6 +18,7 @@ export default defineConfig({
         '**/fixtures.ts',
         '**/fixture.ts',
         '**/*.fixture.ts',
+        'src/types/*.ts',
       ],
     }),
   ],

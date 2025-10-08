@@ -1,4 +1,3 @@
-export * from './createLogic';
 export {
   identity,
   isFinalState,
@@ -8,4 +7,3 @@ export {
 } from './helpers';
 export * from './interpreter';
 export * from './Machine';
-export * from './types';

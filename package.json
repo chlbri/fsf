@@ -32,7 +32,6 @@
     }
   ],
   "scripts": {
-    "rimraf": "pnpm dlx rimraf",
     "build": "pnpm run rimraf lib && pnpm run rollup",
     "ci": "pnpm run config:off && pnpm run lint && pnpm run test",
     "ci:admin": "pnpm run remove && pnpm run upgrade && pnpm run ci",
@@ -42,17 +41,18 @@
     "lint": "pnpm run prettier && pnpm run eslint --fix",
     "lint-watch": "onchange --await-write-finish 5500 \"**/*\" -- pnpm run lint",
     "p-q": "pretty-quick --pattern \"**/*.*(ts|tsx)\"",
+    "posttest": "pnpm run size && npm run prettier && pnpm run p-q",
     "prepare": "husky",
     "prepublishOnly": "pnpm run lint && pnpm run build",
     "pretest": "pnpm run build",
-    "posttest": "pnpm run size && npm run prettier && pnpm run p-q",
     "prettier": "prettier --write \"src/**/*.{ts,tsx}\"",
     "remove": "pnpm run rimraf -rf node_modules pnpm-lock.yaml",
+    "rimraf": "pnpm dlx rimraf",
     "rinit": "pnpm run remove && pnpm run config:off",
     "rollup": "rollup -c",
     "size": "size-limit",
-    "test:coverage": "vitest run",
     "test": "pnpm run test:coverage --no-coverage",
+    "test:coverage": "vitest run",
     "test:only": "vitest run ./src/monad.test.ts",
     "upgrade": "pnpm dlx @bemedev/upgrade-npm-package"
   },

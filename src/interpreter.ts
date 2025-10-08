@@ -1,48 +1,48 @@
-import { Machine } from './Machine';
-import { Param, StateDefinition } from './types';
-import type { Config, ConfigTypes, isAsyncConfig } from './types2';
+import { Machine, type AnyMachine } from './Machine';
 
-export type InterpreterOptions = {
+import type {
+  Config,
+  ConfigTypes,
+  IsAsyncConfig,
+  Param,
+  StateDefinition,
+} from './types';
+
+export type InterpreterOptions<TC> = {
   overflow?: number;
-};
+} & (object extends TC ? { context?: TC } : { context: TC });
 
 class Interpreter<
   const C extends Config,
   const T extends ConfigTypes<C> = ConfigTypes<C>,
-  TA extends T['events'] = T['events'],
-  TC extends T['context'] = T['context'],
-  R extends T['data'] = T['data'],
 > {
-  #events!: TA;
-  #initialContext!: TC;
+  #events!: T['events'];
+  #initialContext!: T['context'];
 
   // #region Props
-  #data?: R;
-  protected _context!: TC;
+  #data?: T['data'];
+  protected _context!: T['context'];
   readonly #overflow: number;
-  protected _currentState!: StateDefinition<TA, TC, R>;
+  protected _currentState!: StateDefinition<
+    T['events'],
+    T['context'],
+    T['data']
+  >;
   #hasNext = true;
   readonly #machine: Machine<C, T>;
-  readonly #errors: string[];
   // #endregion
 
-  constructor(machine: Machine<C, T>, options?: InterpreterOptions) {
+  constructor(
+    machine: Machine<C, T>,
+    options?: InterpreterOptions<T['context']>,
+  ) {
     this.#machine = machine.safe;
-    this.#errors = machine.errors;
     this.#overflow = options?.overflow ?? 100;
     this._initializeStates();
   }
 
   get machine() {
     return this.#machine.clone;
-  }
-
-  get errors() {
-    return this.#errors;
-  }
-
-  get initialContext() {
-    return this.#initialContext;
   }
 
   protected readonly _initializeStates = () => {
@@ -62,7 +62,7 @@ class Interpreter<
     this._currentState = out;
   };
 
-  #rinit = (events?: TA) => {
+  #rinit = (events?: T['events']) => {
     this.#events = events ?? this.#events;
     this.#hasNext = true;
     this._context = structuredClone(this.#initialContext);
@@ -97,12 +97,12 @@ class Interpreter<
     this.#data = data;
   };
 
-  setInitialContext = (context: TC) => {
+  setInitialContext = (context: T['context']) => {
     this.#initialContext = context;
     Object.freeze(this.#initialContext);
   };
 
-  readonly build = (...events: Param<TA>) => {
+  readonly build = (...events: Param<T['events']>) => {
     let iterator = this.#rinit(events[0]);
 
     while (this.#hasNext) {
@@ -116,7 +116,7 @@ class Interpreter<
     return this.#data!;
   };
 
-  readonly buildAsync = async (...events: Param<TA>) => {
+  readonly buildAsync = async (...events: Param<T['events']>) => {
     let iterator = this.#rinit(events[0]);
 
     while (this.#hasNext) {
@@ -138,16 +138,22 @@ type ReturnAsync<Async extends boolean, TA, R> = true extends Async
   : (...events: Param<TA>) => NonNullable<R>;
 
 // Difficult
-export function interpret<
-  const C extends Config = Config,
-  const T extends ConfigTypes<C> = ConfigTypes<C>,
->(
-  machine: Machine<C, T, T['events'], T['context'], T['data']>,
-  options?: InterpreterOptions,
-): ReturnAsync<isAsyncConfig<C>, T['events'], T['data']> {
-  const interpreter = new Interpreter<C, T>(machine, options);
-  const async = machine.__options.async;
+export function interpret<const M extends AnyMachine>(
+  machine: M,
+  options?: InterpreterOptions<M['__types']['context']>,
+): ReturnAsync<
+  IsAsyncConfig<M['__config']>,
+  M['__types']['events'],
+  M['__types']['data']
+> {
+  const interpreter = new (Interpreter as any)(machine, options);
+
+  interpreter.setInitialContext(options?.context ?? {});
   return (
-    !async ? interpreter.build : interpreter.buildAsync
-  ) as ReturnAsync<isAsyncConfig<C>, T['events'], T['data']>;
+    !machine.async ? interpreter.build : interpreter.buildAsync
+  ) as ReturnAsync<
+    IsAsyncConfig<M['__config']>,
+    M['__types']['events'],
+    M['__types']['data']
+  >;
 }

@@ -1,4 +1,5 @@
-import reduceGuards, { GuardDefUnion, GuardDefs } from '@bemedev/x-guard';
+import reduceGuards, { GuardDefs, GuardDefUnion } from '@bemedev/x-guard';
+
 import type {
   ExtractFunction,
   ExtractFunctionProps,
@@ -8,8 +9,10 @@ import type {
   PropsExtractorPromise,
   PropsExtractorTransition,
 } from './Machine.types';
+
 import {
   identity,
+  isAsync,
   isFinalState,
   isFinalStateDefinition,
   isPromiseState,
@@ -17,44 +20,40 @@ import {
   isReadonlyArray,
   isSimpleStateDefinition,
 } from './helpers';
+
 import type {
-  GuardUnion,
+  Config,
+  ConfigDef,
+  ConfigTypes,
   Guards,
+  GuardUnion,
+  NoExtraKeysConfigDef,
+  Options,
   PromiseStateDefinition,
   SAS,
   SRCDefinition,
   StateDefinition,
   StateFunction,
+  TransformConfigDef,
   TransitionDefinition,
   Undy,
 } from './types';
-import type {
-  Config,
-  ConfigDef,
-  ConfigTypes,
-  NoExtraKeysConfigDef,
-  Options,
-  TransformConfigDef,
-} from './types2';
 
 /**
  * @class Class representing a machine function
  *
  * Implements syntax of {@link XState https://xstate.js.org/docs/guides/states.html#state-nodes}
  */
-export class Machine<
+class Machine<
   const C extends Config = Config,
   const T extends ConfigTypes<C> = ConfigTypes<C>,
-  TA extends T['events'] = T['events'],
-  TC extends T['context'] = T['context'],
-  R extends T['data'] = T['data'],
 > {
   // #region Props
-  #states: StateDefinition<TA, TC, R>[] = [];
+  #states: StateDefinition<T['events'], T['context'], T['data']>[] = [];
   #initial: string;
   #config: C;
   readonly __types: T;
-  #options: Options<C, T, R> = {};
+  #options: Options<C, T> = {};
   #errors: string[] = [];
   #unFreezeArgs!: boolean;
 
@@ -84,29 +83,36 @@ export class Machine<
     }
     return this;
   }
+
+  get async() {
+    return isAsync(this.#config);
+  }
   // #endregion
 
   // #region Building states
   #assignGuardsUnion = (
     values: readonly GuardUnion[],
-    guards: Required<Options<C, T, R>>['guards'],
-  ): GuardDefUnion<Undy<TA>, TC>[] => {
-    return values.reduce((acc: GuardDefUnion<Undy<TA>, TC>[], value) => {
-      if (typeof value === 'string') {
-        const guard = (guards as any)[value];
-        acc.push(guard);
-      } else {
-        const _guards = this.#assignGuards(value, guards);
-        if (_guards) acc.push(_guards as any);
-      }
-      return acc;
-    }, []);
+    guards: Required<Options<C, T>>['guards'],
+  ): GuardDefUnion<Undy<T['events']>, T['context']>[] => {
+    return values.reduce(
+      (acc: GuardDefUnion<Undy<T['events']>, T['context']>[], value) => {
+        if (typeof value === 'string') {
+          const guard = (guards as any)[value];
+          acc.push(guard);
+        } else {
+          const _guards = this.#assignGuards(value, guards);
+          if (_guards) acc.push(_guards as any);
+        }
+        return acc;
+      },
+      [],
+    );
   };
 
   #assignGuards = (
     values?: Guards,
-    guards?: Options<C, T, R>['guards'],
-  ): GuardDefs<Undy<TA>, TC> | undefined => {
+    guards?: Options<C, T>['guards'],
+  ): GuardDefs<Undy<T['events']>, T['context']> | undefined => {
     if (!values) return;
     if (!guards) {
       this.#errors.push('No guards provided');
@@ -145,9 +151,9 @@ export class Machine<
 
   #extractActions = (
     strings?: SAS,
-    actions?: Options<C, T, R>['actions'],
-  ): StateFunction<TC, TA, void>[] => {
-    const functions: StateFunction<TC, TA, void>[] = [];
+    actions?: Options<C, T>['actions'],
+  ): StateFunction<T['context'], T['events'], void>[] => {
+    const functions: StateFunction<T['context'], T['events'], void>[] = [];
     if (!strings) return functions;
 
     if (isReadonlyArray(strings)) {
@@ -171,13 +177,16 @@ export class Machine<
     options,
     source,
     __keys,
-  }: ExtractFunctionProps<C, T, TC, R>): ExtractFunction<TC, TA> => {
+  }: ExtractFunctionProps<C, T>): ExtractFunction<
+    T['context'],
+    T['events']
+  > => {
     return transition => {
       if (typeof transition === 'string') {
         const target = transition;
         const check = __keys.includes(target);
         if (!check) {
-          this.#errors.push(`State ${target} is not defined`);
+          this.#errors.push(`State "${target}" is not defined`);
         }
 
         if (source === transition) {
@@ -193,7 +202,7 @@ export class Machine<
       const target = transition.target;
       const check = __keys.includes(target);
       if (!check) {
-        this.#errors.push(`State ${target} is not defined`);
+        this.#errors.push(`State "${target}" is not defined`);
       }
 
       if (source === target) {
@@ -223,11 +232,12 @@ export class Machine<
     always,
     options,
     __keys,
-  }: PropsExtractorTransition<C, T, TC, R>): TransitionDefinition<
-    TC,
-    TA
+  }: PropsExtractorTransition<C, T>): TransitionDefinition<
+    T['context'],
+    T['events']
   >[] => {
-    const functions: TransitionDefinition<TC, TA>[] = [];
+    const functions: TransitionDefinition<T['context'], T['events']>[] =
+      [];
     const extractor = this.#extractFunction({
       source,
       __keys,
@@ -242,10 +252,12 @@ export class Machine<
     return functions;
   };
 
-  #extractPromise = <R>(
+  #extractPromise = (
     value: string,
-    promises?: Options<C, T, R>['promises'],
-  ): StateFunction<TC, TA, Promise<any>> | undefined => {
+    promises?: Options<C, T>['promises'],
+  ):
+    | StateFunction<T['context'], T['events'], Promise<any>>
+    | undefined => {
     const action = (promises as any)?.[value];
     if (!action) {
       this.#errors.push(`Promise ${value} is not provided`);
@@ -259,8 +271,12 @@ export class Machine<
     __keys,
     promises,
     options,
-  }: PropsExtractorPromise<C, T, TC, R>): SRCDefinition<TA, TC, R>[] {
-    const _promises: SRCDefinition<TA, TC, R>[] = [];
+  }: PropsExtractorPromise<C, T>): SRCDefinition<
+    T['events'],
+    T['context'],
+    R
+  >[] {
+    const _promises: SRCDefinition<T['events'], T['context'], R>[] = [];
     if (isReadonlyArray(promises)) {
       const _actions = promises
         .map(promises => {
@@ -282,7 +298,7 @@ export class Machine<
       );
       const value = promises.src;
 
-      const src = this.#extractPromise<R>(promises.src, options?.promises);
+      const src = this.#extractPromise(promises.src, options?.promises);
 
       const argsThen = {
         __keys,
@@ -317,10 +333,10 @@ export class Machine<
     return _promises;
   }
 
-  readonly #buildStates = (config: C, options?: Options<C, T, R>) => {
+  readonly #buildStates = (config: C, options?: Options<C, T>) => {
     // #region Props
     const initial = config.initial;
-    const states: StateDefinition<TA, TC>[] = [];
+    const states: StateDefinition<T['events'], T['context']>[] = [];
     const __states = Object.entries(config.states);
     const __keys = Object.keys(config.states);
     // #endregion
@@ -410,12 +426,7 @@ export class Machine<
 
   #searchState = (state: string) => {
     const _state = this.#states.find(s => s.value === state);
-
     return _state!;
-  };
-
-  checkAllStates = () => {
-    const keys = Object.keys(this.#config.states);
   };
 
   /**
@@ -423,14 +434,14 @@ export class Machine<
    *
    * Warning: This function is not pure, only use a inline context
    */
-  readonly next: NextFunction<TA, TC, R> = ({
+  readonly next: NextFunction<T['events'], T['context'], T['data']> = ({
     events,
     state,
     context,
   }) => {
     const current = this.#searchState(state);
 
-    let data: R | undefined = undefined;
+    let data: T['data'] | undefined = undefined;
     const _events = this.#unFreezeArgs
       ? events
       : (Object.freeze(events) as any);
@@ -445,8 +456,9 @@ export class Machine<
 
       target = this.#runTransitions(current.transitions, context, _events);
       current.exit.forEach(entry => entry(context, _events));
-      hasNext = !!target;
+      hasNext = target !== undefined;
     }
+
     return { state: target, context, data, hasNext };
   };
 
@@ -455,13 +467,13 @@ export class Machine<
    *
    * Warning: This function is not pure, only use a inline context
    */
-  readonly nextAsync: NextFunctionAsync<TA, TC, R> = async ({
-    events,
-    state,
-    context,
-  }) => {
+  readonly nextAsync: NextFunctionAsync<
+    T['events'],
+    T['context'],
+    T['data']
+  > = async ({ events, state, context }) => {
     const current = this.#searchState(state);
-    let data: R | undefined = undefined;
+    let data: T['data'] | undefined = undefined;
     const _events = this.#unFreezeArgs ? events : Object.freeze(events);
     let target: string | undefined = undefined;
 
@@ -487,8 +499,8 @@ export class Machine<
   };
 
   #runTransitions(
-    transitions: TransitionDefinition<TC, TA>[],
-    context: TC,
+    transitions: TransitionDefinition<T['context'], T['events']>[],
+    context: T['context'],
     _events: any,
   ) {
     let target: string | undefined = undefined;
@@ -507,8 +519,8 @@ export class Machine<
   }
 
   #resolveStatePromise = async (
-    current: PromiseStateDefinition<TA, TC, any>,
-    context: TC,
+    current: PromiseStateDefinition<T['events'], T['context'], any>,
+    context: T['context'],
     _events: any,
   ): Promise<string | undefined> => {
     current.entry.forEach(entry => entry(context, _events));
@@ -532,18 +544,32 @@ export class Machine<
     return target;
   };
 
-  #addOptions = (options: Options<C, T, R>) => {
+  #addOptions = (options: Options<C, T>) => {
     this.#options = options;
     this.#unFreezeArgs = options.unFreezeArgs ?? false;
     this.#states = this.#buildStates(this.#config, options);
   };
 
-  provideOptions = (options: Options<C, T, R>) => {
+  provideOptions = (options: Options<C, T>) => {
     const out = this.clone;
+    out.#errors = [];
     out.#addOptions(options);
     return out;
   };
 }
+
+export { type Machine };
+
+export type AnyMachine = {
+  __config: any;
+  __types: {
+    context: any;
+    events: any;
+    data: any;
+    promises?: any;
+  };
+  async: boolean;
+};
 
 export type CreateLogic_F = <
   const C2 extends
@@ -556,7 +582,7 @@ export type CreateLogic_F = <
 >(
   config: C & { __tsSchema?: NoExtraKeysConfigDef<C2> },
   types: T,
-) => Machine<C, T, T['events'], T['context'], T['data']>;
+) => Machine<C, T>;
 
 export const createLogic: CreateLogic_F = (config, types) => {
   const _machine = new Machine(config, types) as any;
