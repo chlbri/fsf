@@ -24,3 +24,7 @@ export type StateFunction<TC = any, TA = any, R = void> = (
 export type SAS = SingleOrArray<string>;
 
 export type Param<T> = T extends null ? [Exclude<T, null>?] : [T];
+
+export type PromiseDef = { data: any; error: any };
+
+export type PromiseDefs = Record<string, PromiseDef>;

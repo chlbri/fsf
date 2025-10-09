@@ -1,12 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-import type {
-  RecordFunctions,
-  SAS,
-  SingleOrArray,
-  SoA,
-  StateFunction,
-  UnionToIntersection,
-} from './core';
+import type { PromiseDef, SAS, SingleOrArray, SoA } from './core';
 
 // #region Guards
 
@@ -19,13 +11,6 @@ export type Guards = SingleOrArray<GuardUnion>;
 // #endregion
 
 export type TransitionObj<S extends string = string> = {
-  target: S;
-  cond?: Guards;
-  actions?: SAS;
-  description?: string;
-};
-
-export type TransitionObj2<S extends string = string> = {
   target?: S;
   cond?: Guards;
   actions?: SAS;
@@ -34,8 +19,6 @@ export type TransitionObj2<S extends string = string> = {
 
 export type Transition<S extends string = string> = S | TransitionObj<S>;
 
-export type Transition2<S extends string = string> = S | TransitionObj2<S>;
-
 export type BaseState = {
   entry?: SAS;
   description?: string;
@@ -43,22 +26,12 @@ export type BaseState = {
 
 export type TransitionArray<S extends string = string> = readonly [
   ...{
-    target: S;
-    cond: Guards;
-    actions?: SAS;
-    description?: string;
-  }[],
-  Transition<S>,
-];
-
-export type TransitionArray2<S extends string = string> = readonly [
-  ...{
     target?: S;
     cond: Guards;
     actions?: SAS;
     description?: string;
   }[],
-  Transition2<S>,
+  Transition<S>,
 ];
 
 export type SimpleState<S extends string = string> = BaseState & {
@@ -68,8 +41,8 @@ export type SimpleState<S extends string = string> = BaseState & {
 
 export type SRC<S extends string = string> = {
   src: S;
-  then: Transition2<S> | TransitionArray2<S>;
-  catch: Transition2<S> | TransitionArray2<S>;
+  then: Transition<S> | TransitionArray<S>;
+  catch: Transition<S> | TransitionArray<S>;
   finally?: SAS;
 };
 
@@ -156,28 +129,27 @@ export type ExtractSOA<T extends SingleOrArray | undefined> =
         : T;
 
 export type GetEntryActions<ST extends Record<string, State>> =
-  GetEntryActionsFromState<ST[keyof ST]>;
+  GetEntryActionKeysFromState<ST[keyof ST]>;
 
-export type GetEntryActionsFromState<ST extends State> = ExtractSOA<
+export type GetEntryActionKeysFromState<ST extends State> = ExtractSOA<
   ST['entry']
 >;
 
-export type GetTransitionsActions<
-  T extends Transition | Transition2 | TransitionArray | TransitionArray2,
-> = T extends string
-  ? never
-  : T extends TransitionObj | TransitionObj2
-    ? ExtractSOA<T['actions']>
-    : T extends TransitionArray | TransitionArray2
-      ? GetTransitionsActions<T[number]>
-      : never;
+export type GetTransitionsActions<T extends Transition | TransitionArray> =
+  T extends string
+    ? never
+    : T extends TransitionObj
+      ? ExtractSOA<T['actions']>
+      : T extends TransitionArray
+        ? GetTransitionsActions<T[number]>
+        : never;
 
 export type GetExitActionsFromSimpleState<ST extends SimpleState> =
   ExtractSOA<ST['exit']>;
 
 export type GetActionKeysFromSimpleState<ST extends SimpleState> =
   | GetTransitionsActions<Exclude<ST['always'], undefined>>
-  | GetEntryActionsFromState<ST>
+  | GetEntryActionKeysFromState<ST>
   | GetExitActionsFromSimpleState<ST>;
 
 export type GetPromiseKeysFromPromise<T extends PromiseState> =
@@ -190,50 +162,6 @@ export type GetPromiseKeysFromConfig<C extends Config> =
   > extends infer P extends PromiseState
     ? GetPromiseKeysFromPromise<P>
     : never;
-
-type PromiseDef = { data: any; error: any };
-
-type PromiseDefs = Record<string, PromiseDef>;
-
-export type GetActionsBySRC<
-  S extends PromiseDefs,
-  T extends SRC,
-  TC extends object = object,
-> = Record<
-  GetTransitionsActions<T['then']>,
-  StateFunction<TC, S[T['src']]['data']>
-> &
-  Record<
-    GetTransitionsActions<T['catch']>,
-    StateFunction<TC, S[T['src']]['error']>
-  > &
-  Record<
-    ExtractSOA<T['finally']>,
-    StateFunction<TC, S[T['src']]['data'] | S[T['src']]['error'], void>
-  >;
-
-export type GetActionsFromPromiseState<
-  ST extends PromiseState,
-  S extends PromiseDefs = PromiseDefs,
-  TC extends object = object,
-  TA = any,
-> = Record<GetEntryActionsFromState<ST>, StateFunction<TC, TA, void>> &
-  (ExtractSOA<ST['invoke']> extends infer U extends SRC
-    ? GetActionsBySRC<S, U, TC>
-    : unknown);
-
-export type GetActionsFromState<
-  ST extends State,
-  S extends PromiseDefs = PromiseDefs,
-  TC extends object = object,
-  TA = any,
-> = ST extends PromiseState
-  ? GetActionsFromPromiseState<ST, S, TC, TA>
-  : ST extends SimpleState
-    ? Record<GetActionKeysFromSimpleState<ST>, StateFunction<TC, TA>>
-    : ST extends FinalState
-      ? Record<GetEntryActionsFromState<ST>, StateFunction<TC, TA>>
-      : never;
 
 // #region Guards
 
@@ -253,72 +181,14 @@ export type GetKeysFromGuard<T extends Guards | undefined> =
               : never;
 
 export type GetGuardKeysFromTransition<
-  T extends Transition | TransitionArray | TransitionArray2 | Transition2,
+  T extends TransitionArray | Transition,
 > = T extends string
   ? never
-  : T extends TransitionObj | TransitionObj2
+  : T extends TransitionObj
     ? GetKeysFromGuard<T['cond']>
-    : T extends TransitionArray | TransitionArray2
+    : T extends TransitionArray
       ? GetGuardKeysFromTransition<T[number]>
       : never;
-
-export type GetGuardsFromSimpleState<
-  ST extends SimpleState,
-  TC extends object = object,
-  TA = any,
-> =
-  GetGuardKeysFromTransition<
-    Exclude<ST['always'], undefined>
-  > extends infer Keys extends string
-    ? Record<Keys, StateFunction<TC, TA, boolean>>
-    : never;
-
-export type GetGuardsFromSRC<
-  Invoke extends SRC,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  TC extends object = object,
-> = (GetGuardKeysFromTransition<Invoke['then']> extends infer ThenKeys
-  ? ThenKeys extends never
-    ? unknown
-    : RecordFunctions<ThenKeys, TC, S[Invoke['src']]['data'], boolean>
-  : unknown) &
-  (GetGuardKeysFromTransition<Invoke['catch']> extends infer CatchKeys
-    ? CatchKeys extends never
-      ? unknown
-      : RecordFunctions<CatchKeys, TC, S[Invoke['src']]['error'], boolean>
-    : unknown);
-
-export type GetGuardsFromPromiseState<
-  ST extends PromiseState,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  TC extends object = object,
-> = ST['invoke'] extends infer Invoke
-  ? Invoke extends SRC
-    ? GetGuardsFromSRC<Invoke, S, TC>
-    : Invoke extends ReadonlyArray<SRC>
-      ? GetGuardsFromSRC<Invoke[number], S, TC>
-      : never
-  : never;
-
-export type GetGuardsFromState<
-  ST extends State,
-  S extends Record<string, { data: any; error: any }> = Record<
-    string,
-    { data: any; error: any }
-  >,
-  TC extends object = object,
-  TA = any,
-> = ST extends SimpleState
-  ? GetGuardsFromSimpleState<ST, TC, TA>
-  : ST extends PromiseState
-    ? GetGuardsFromPromiseState<ST, S, TC>
-    : never;
 
 // #endregion
 
@@ -337,49 +207,3 @@ type _ExtractDataKeysFromConfig<C extends Config> =
 
 export type ExtractDataKeysFromConfig<C extends Config> =
   _ExtractDataKeysFromConfig<C> extends infer T extends string ? T : never;
-
-export type Options<
-  C extends Config,
-  T extends ConfigTypes<C>,
-  T1 extends T & { promises: {} } = T & { promises: {} },
-> = {
-  overflow?: number;
-  strict?: boolean;
-  unFreezeArgs?: boolean;
-
-  datas?: Partial<
-    UnionToIntersection<
-      Record<
-        ExtractDataKeysFromConfig<C>,
-        StateFunction<T['context'], T['events'], T['data']>
-      >
-    >
-  >;
-
-  actions?: Partial<
-    UnionToIntersection<
-      GetActionsFromState<
-        C['states'][keyof C['states']],
-        T1['promises'],
-        T['context'],
-        T['events']
-      >
-    >
-  >;
-
-  guards?: Partial<
-    UnionToIntersection<
-      GetGuardsFromState<
-        C['states'][keyof C['states']],
-        T1['promises'],
-        T['context'],
-        T['events']
-      >
-    >
-  >;
-
-  promises?: Record<
-    GetPromiseKeysFromConfig<C>,
-    StateFunction<T['context'], T['events'], Promise<any>>
-  >;
-};

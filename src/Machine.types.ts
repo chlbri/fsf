@@ -5,9 +5,7 @@ import type {
   PromiseState,
   StateDefinition,
   Transition,
-  Transition2,
   TransitionArray,
-  TransitionArray2,
   TransitionDefinition,
 } from './types';
 
@@ -65,7 +63,7 @@ export type ExtractFunctionProps<
 };
 
 export type ExtractFunction<TC extends object = object, TA = any> = (
-  value?: Transition | Transition2,
+  value?: Transition,
 ) => TransitionDefinition<TC, TA>;
 
 export type PropsExtractorTransition<
@@ -73,7 +71,7 @@ export type PropsExtractorTransition<
   T extends ConfigTypes<C> = ConfigTypes<C>,
 > = {
   source: string;
-  always?: Transition | Transition2 | TransitionArray | TransitionArray2;
+  always?: Transition | TransitionArray;
   options?: Omit<Options<C, T>, 'overflow' | 'datas'>;
   __keys: string[];
 };

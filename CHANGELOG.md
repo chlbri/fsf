@@ -11,6 +11,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <br/>
 
 <details>
+
+<summary>
+
+## [1.0.1] - 2025-10-09
+
+</summary>
+
+### Tests (**100%** _coverage_)
+
+### Added
+
+- Type testing
+- Better typings
+- Better organizations
+
+</details>
+
+<br/>
+
+<details>
 <summary>
 
 ## [1.0.0] - 2025-10-08
