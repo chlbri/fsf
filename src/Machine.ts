@@ -11,7 +11,6 @@ import type {
 } from './Machine.types';
 
 import {
-  identity,
   isAsync,
   isFinalState,
   isFinalStateDefinition,
@@ -57,13 +56,27 @@ class Machine<
   #errors: string[] = [];
   #unFreezeArgs!: boolean;
 
+  #defaultData!: StateFunction<T['context'], T['events'], T['data']>;
+
   // #endregion
 
   // #region Getters
+  /**
+   * @deprecated
+   * Use internally to get the config
+   *
+   */
+  /* v8 ignore next 3 */
   get __config() {
     return this.#config;
   }
 
+  /**
+   * @deprecated
+   * Use internally to get the config
+   * v8 ignore next 3
+   */
+  /* v8 ignore next 3 */
   get __options() {
     return this.#options;
   }
@@ -118,6 +131,7 @@ class Machine<
       this.#errors.push('No guards provided');
       return;
     }
+
     if (typeof values === 'string') {
       const guard = (guards as any)[values];
       if (!guard) {
@@ -126,25 +140,17 @@ class Machine<
       }
       return guard;
     }
+
     if ('and' in values) {
       const _and = values.and;
-      if (isReadonlyArray(_and)) {
-        const and = this.#assignGuardsUnion(_and, guards);
-        return { and };
-      } else {
-        const and = this.#assignGuardsUnion([_and as any], guards);
-        return { and };
-      }
+      const and = this.#assignGuardsUnion(_and, guards);
+      return { and };
     }
+
     if ('or' in values) {
       const _or = values.or;
-      if (isReadonlyArray(_or)) {
-        const or = this.#assignGuardsUnion(_or, guards);
-        return { or };
-      } else {
-        const or = this.#assignGuardsUnion([_or as any], guards);
-        return { or };
-      }
+      const or = this.#assignGuardsUnion(_or, guards);
+      return { or };
     }
     return this.#assignGuardsUnion(values as any, guards);
   };
@@ -182,6 +188,13 @@ class Machine<
     T['events']
   > => {
     return transition => {
+      if (!transition) {
+        return {
+          source,
+          actions: [],
+          // target: source,
+        };
+      }
       if (typeof transition === 'string') {
         const target = transition;
         const check = __keys.includes(target);
@@ -200,7 +213,7 @@ class Machine<
       }
 
       const target = transition.target;
-      const check = __keys.includes(target);
+      const check = target && __keys.includes(target);
       if (!check) {
         this.#errors.push(`State "${target}" is not defined`);
       }
@@ -349,16 +362,25 @@ class Machine<
       this.#errors.push(`No initial state : ${initial}`);
     }
 
+    this.#defaultData = (options as any)?.datas?.[config.data];
+    if (!this.#defaultData) {
+      this.#errors.push(`At least one data function must be provided`);
+    }
+
     for (const [value, state] of __states) {
       const entry = this.#extractActions(state.entry, options?.actions);
       if (isFinalState(state)) {
-        const data = (options as any)?.datas?.[state.data] ?? identity;
+        const data = (options as any)?.datas?.[state.data];
 
-        states.push({
-          value,
-          entry,
-          data,
-        });
+        if (!data) {
+          this.#errors.push(`Data "${state.data}" is not provided`);
+        } else {
+          states.push({
+            value,
+            entry,
+            data,
+          });
+        }
       } else if (isPromiseState(state)) {
         const source = value;
 
@@ -457,6 +479,7 @@ class Machine<
       target = this.#runTransitions(current.transitions, context, _events);
       current.exit.forEach(entry => entry(context, _events));
       hasNext = target !== undefined;
+      data = this.#defaultData(context, _events);
     }
 
     return { state: target, context, data, hasNext };
@@ -521,26 +544,28 @@ class Machine<
   #resolveStatePromise = async (
     current: PromiseStateDefinition<T['events'], T['context'], any>,
     context: T['context'],
-    _events: any,
+    events: any,
   ): Promise<string | undefined> => {
-    current.entry.forEach(entry => entry(context, _events));
+    current.entry.forEach(entry => entry(context, events));
     let target: string | undefined = undefined;
 
-    for await (const promise of current.invoke) {
-      const { src, catch: _catch, then, finally: _finally } = promise;
-      if (src) {
-        await src(context, _events)
-          .then(awaited => {
-            target = this.#runTransitions(then, context, awaited);
-          })
-          .catch(reason => {
-            target = this.#runTransitions(_catch, context, reason);
-          })
-          .finally(() => {
-            _finally.forEach(entry => entry(context, _events));
-          });
-      }
-    }
+    await Promise.all(
+      current.invoke.map(async promise => {
+        const { src, catch: _catch, then, finally: _finally } = promise;
+        if (src) {
+          await src(context, events)
+            .then(awaited => {
+              target = this.#runTransitions(then, context, awaited);
+            })
+            .catch(reason => {
+              target = this.#runTransitions(_catch, context, reason);
+            })
+            .finally(() => {
+              _finally.forEach(entry => entry(context, events));
+            });
+        }
+      }),
+    );
     return target;
   };
 

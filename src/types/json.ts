@@ -12,8 +12,8 @@ import type {
 
 export type SimpleGuard = string;
 export type GuardUnion = GuardAnd | GuardOr | SimpleGuard;
-export type GuardAnd = { and: SingleOrArray<GuardUnion> };
-export type GuardOr = { or: SingleOrArray<GuardUnion> };
+export type GuardAnd = { and: GuardUnion[] };
+export type GuardOr = { or: GuardUnion[] };
 export type Guards = SingleOrArray<GuardUnion>;
 
 // #endregion
@@ -25,7 +25,16 @@ export type TransitionObj<S extends string = string> = {
   description?: string;
 };
 
+export type TransitionObj2<S extends string = string> = {
+  target?: S;
+  cond?: Guards;
+  actions?: SAS;
+  description?: string;
+};
+
 export type Transition<S extends string = string> = S | TransitionObj<S>;
+
+export type Transition2<S extends string = string> = S | TransitionObj2<S>;
 
 export type BaseState = {
   entry?: SAS;
@@ -33,24 +42,34 @@ export type BaseState = {
 };
 
 export type TransitionArray<S extends string = string> = readonly [
-  {
+  ...{
     target: S;
     cond: Guards;
     actions?: SAS;
     description?: string;
-  },
-  ...Transition<S>[],
+  }[],
+  Transition<S>,
+];
+
+export type TransitionArray2<S extends string = string> = readonly [
+  ...{
+    target?: S;
+    cond: Guards;
+    actions?: SAS;
+    description?: string;
+  }[],
+  Transition2<S>,
 ];
 
 export type SimpleState<S extends string = string> = BaseState & {
   exit?: SAS;
-  always: Transition<S> | TransitionArray<S>;
+  always?: Transition<S> | TransitionArray<S>;
 };
 
 export type SRC<S extends string = string> = {
   src: S;
-  then: Transition<S> | TransitionArray<S>;
-  catch: Transition<S> | TransitionArray<S>;
+  then: Transition2<S> | TransitionArray2<S>;
+  catch: Transition2<S> | TransitionArray2<S>;
   finally?: SAS;
 };
 
@@ -68,7 +87,7 @@ export type State<S extends string = string> =
   | PromiseState<S>;
 
 export type Config = {
-  data?: string;
+  data: string;
   states: Record<string, State>;
   initial: string;
 };
@@ -143,20 +162,21 @@ export type GetEntryActionsFromState<ST extends State> = ExtractSOA<
   ST['entry']
 >;
 
-export type GetTransitionsActions<T extends Transition | TransitionArray> =
-  T extends string
-    ? never
-    : T extends TransitionObj
-      ? ExtractSOA<T['actions']>
-      : T extends TransitionArray
-        ? GetTransitionsActions<T[number]>
-        : never;
+export type GetTransitionsActions<
+  T extends Transition | Transition2 | TransitionArray | TransitionArray2,
+> = T extends string
+  ? never
+  : T extends TransitionObj | TransitionObj2
+    ? ExtractSOA<T['actions']>
+    : T extends TransitionArray | TransitionArray2
+      ? GetTransitionsActions<T[number]>
+      : never;
 
 export type GetExitActionsFromSimpleState<ST extends SimpleState> =
   ExtractSOA<ST['exit']>;
 
 export type GetActionKeysFromSimpleState<ST extends SimpleState> =
-  | GetTransitionsActions<ST['always']>
+  | GetTransitionsActions<Exclude<ST['always'], undefined>>
   | GetEntryActionsFromState<ST>
   | GetExitActionsFromSimpleState<ST>;
 
@@ -186,6 +206,10 @@ export type GetActionsBySRC<
   Record<
     GetTransitionsActions<T['catch']>,
     StateFunction<TC, S[T['src']]['error']>
+  > &
+  Record<
+    ExtractSOA<T['finally']>,
+    StateFunction<TC, S[T['src']]['data'] | S[T['src']]['error'], void>
   >;
 
 export type GetActionsFromPromiseState<
@@ -229,12 +253,12 @@ export type GetKeysFromGuard<T extends Guards | undefined> =
               : never;
 
 export type GetGuardKeysFromTransition<
-  T extends Transition | TransitionArray,
+  T extends Transition | TransitionArray | TransitionArray2 | Transition2,
 > = T extends string
   ? never
-  : T extends TransitionObj
+  : T extends TransitionObj | TransitionObj2
     ? GetKeysFromGuard<T['cond']>
-    : T extends TransitionArray
+    : T extends TransitionArray | TransitionArray2
       ? GetGuardKeysFromTransition<T[number]>
       : never;
 
@@ -243,8 +267,9 @@ export type GetGuardsFromSimpleState<
   TC extends object = object,
   TA = any,
 > =
-  GetGuardKeysFromTransition<ST['always']> extends infer Keys extends
-    string
+  GetGuardKeysFromTransition<
+    Exclude<ST['always'], undefined>
+  > extends infer Keys extends string
     ? Record<Keys, StateFunction<TC, TA, boolean>>
     : never;
 

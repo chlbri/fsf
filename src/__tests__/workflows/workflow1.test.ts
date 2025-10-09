@@ -7,6 +7,7 @@ describe('Explicit returns, (tidious guards)', () => {
     {
       context: { val: 4 },
       initial: 'idle',
+      data: 'defaultData',
       states: {
         idle: {
           always: {
@@ -42,7 +43,7 @@ describe('Explicit returns, (tidious guards)', () => {
     },
     guards: {},
     datas: {
-      // val: ctx => ctx.val,
+      defaultData: ctx => ctx.val,
       val: ctx => ctx.val,
     },
     unFreezeArgs: true,

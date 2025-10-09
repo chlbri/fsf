@@ -10,7 +10,77 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <br/>
 
+<details>
+<summary>
+
 ## [1.0.0] - 2025-10-08
+
+</summary>
+
+### Tests (**100%** _coverage_)
+
+### Breaking Changes
+
+- **BREAKING**: `Config.data` property is now required at the configuration
+  level
+  - Previously optional, now mandatory for all machine configurations
+  - Must specify a default data function key that will be used when no
+    final state is reached
+  - Example: `{ initial: 'idle', data: 'defaultData', states: {...} }`
+  - All data functions must be provided in
+    `provideOptions({ datas: {...} })`
+  - Throws error "At least one data function must be provided" if the
+    specified data function is missing
+
+### Migration Guide
+
+**Before (v0.x):**
+
+```typescript
+const machine = createLogic(
+  {
+    initial: 'idle',
+    states: {
+      idle: { always: 'done' },
+      done: { data: 'result' },
+    },
+  },
+  { context: {}, events: {}, data: {} as string },
+).provideOptions({
+  datas: {
+    result: () => 'success',
+  },
+});
+```
+
+**After (v1.0.0):**
+
+```typescript
+const machine = createLogic(
+  {
+    initial: 'idle',
+    data: 'defaultData', // ← Now required
+    states: {
+      idle: { always: 'done' },
+      done: { data: 'result' },
+    },
+  },
+  { context: {}, events: {}, data: {} as string },
+).provideOptions({
+  datas: {
+    defaultData: () => 'default', // ← Must provide corresponding function
+    result: () => 'success',
+  },
+});
+```
+
+### Why This Change?
+
+This breaking change ensures that machines always have a fallback data
+return value, even when transitioning through states without explicit data
+definitions. This improves reliability and makes the API more predictable.
+
+</details>
 
 <br/>
 

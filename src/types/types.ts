@@ -3,7 +3,7 @@ import type { StateFunction } from './core';
 export type GuardDef<TA = any, TC = any> = StateFunction<TC, TA, boolean>;
 
 export type TransitionDefinition<TC = any, TA = any> = {
-  target: string;
+  target?: string;
   source: string;
   actions: StateFunction<TC, TA, void>[];
   cond?: GuardDef<TA, TC>;

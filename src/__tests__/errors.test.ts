@@ -6,6 +6,7 @@ describe('Errors', () => {
     const machine = createLogic(
       {
         initial: 'idle',
+        data: 'defaultData',
         __tsSchema: {} as {
           initial: 'idle';
           states: 'idle' | 'calc' | 'final';
@@ -21,9 +22,7 @@ describe('Errors', () => {
               target: 'final',
             },
           },
-          final: {
-            data: 'any',
-          },
+          final: {},
         },
       },
       {} as {
@@ -32,18 +31,22 @@ describe('Errors', () => {
         data: number;
         // promises: {};
       },
-    );
+    ).provideOptions({
+      datas: {
+        defaultData: () => 0,
+      },
+    });
     const func = () => interpret(machine, { overflow: 1 })(3);
 
     expect(func).toThrowError('Overflow transitions');
   });
-
   describe('#02: Tansition state is not defined', () => {
     test('#01 => string', () => {
       const machine = () =>
         createLogic(
           {
             initial: 'idle',
+            data: 'defaultData',
             states: {
               idle: {
                 always: {
@@ -61,7 +64,11 @@ describe('Errors', () => {
             data: number;
             // promises: {};
           },
-        ).safe;
+        ).provideOptions({
+          datas: {
+            defaultData: () => 0,
+          },
+        }).safe;
       expect(machine).toThrowError('State "notDefined" is not defined');
     });
 
@@ -70,6 +77,7 @@ describe('Errors', () => {
         createLogic(
           {
             initial: 'idle',
+            data: 'defaultData',
             states: {
               idle: {
                 always: {
@@ -89,7 +97,11 @@ describe('Errors', () => {
             data: number;
             // promises: {};
           },
-        ).safe;
+        ).provideOptions({
+          datas: {
+            defaultData: () => 0,
+          },
+        }).safe;
       expect(machine).toThrowError('State "final" is not defined');
     });
   });
@@ -98,6 +110,7 @@ describe('Errors', () => {
     const machine = () =>
       createLogic(
         {
+          data: 'defaultData',
           states: {
             idle: {
               always: 'any',
@@ -108,7 +121,12 @@ describe('Errors', () => {
           },
         } as any,
         {} as any,
-      ).safe;
+      ).provideOptions({
+        datas: {
+          defaultData: () => 0,
+          any: () => 'any',
+        },
+      }).safe;
     expect(machine).toThrowError('No initial state');
   });
 
@@ -118,10 +136,15 @@ describe('Errors', () => {
         {
           context: { val: 4 },
           initial: 'idle',
+          data: 'defaultData',
           states: {},
         },
         {} as any,
-      ).safe;
+      ).provideOptions({
+        datas: {
+          defaultData: () => 0,
+        },
+      }).safe;
     expect(machine).toThrowError('No states');
   });
 
@@ -132,6 +155,7 @@ describe('Errors', () => {
           {
             context: { val: 4 },
             initial: 'idle',
+            data: 'defaultData',
             states: {
               idle: {
                 always: 'idle',
@@ -139,7 +163,11 @@ describe('Errors', () => {
             },
           },
           {} as any,
-        ).safe;
+        ).provideOptions({
+          datas: {
+            defaultData: () => 0,
+          },
+        }).safe;
       expect(machine).toThrowError('Cannot transit to himself : idle');
     });
     test('Object', () => {
@@ -148,6 +176,7 @@ describe('Errors', () => {
           {
             context: { val: 4 },
             initial: 'idle',
+            data: 'defaultData',
             states: {
               idle: {
                 always: {
@@ -157,7 +186,11 @@ describe('Errors', () => {
             },
           },
           {} as any,
-        ).safe;
+        ).provideOptions({
+          datas: {
+            defaultData: () => 0,
+          },
+        }).safe;
       expect(machine).toThrowError('Cannot transit to himself : idle');
     });
   });
@@ -169,6 +202,7 @@ describe('Errors', () => {
           {
             context: { val: 4 },
             initial: 'idle',
+            data: 'defaultData',
             states: {
               idle: {
                 always: {
@@ -182,7 +216,12 @@ describe('Errors', () => {
             },
           },
           {} as any,
-        ).safe;
+        ).provideOptions({
+          datas: {
+            defaultData: () => 0,
+            any: () => 'any',
+          },
+        }).safe;
       expect(machine).toThrowError('Action action is not provided');
     });
 
@@ -192,6 +231,7 @@ describe('Errors', () => {
           {
             context: { val: 4 },
             initial: 'idle',
+            data: 'defaultData',
             states: {
               idle: {
                 always: {
@@ -205,7 +245,12 @@ describe('Errors', () => {
             },
           },
           {} as any,
-        ).safe;
+        ).provideOptions({
+          datas: {
+            defaultData: () => 0,
+            any: () => 'any',
+          },
+        }).safe;
       expect(machine).toThrowError('Action action is not provided');
     });
 
@@ -215,6 +260,7 @@ describe('Errors', () => {
           {
             context: { val: 4 },
             initial: 'idle',
+            data: 'defaultData',
             states: {
               idle: {
                 always: {
@@ -228,7 +274,12 @@ describe('Errors', () => {
             },
           },
           {} as any,
-        ).safe;
+        ).provideOptions({
+          datas: {
+            defaultData: () => 0,
+            any: () => 'any',
+          },
+        }).safe;
       expect(machine).toThrowError('No guards provided');
     });
 
@@ -238,6 +289,7 @@ describe('Errors', () => {
           {
             context: { val: 4 },
             initial: 'idle',
+            data: 'defaultData',
             states: {
               idle: {
                 always: {
@@ -251,7 +303,13 @@ describe('Errors', () => {
             },
           },
           {} as any,
-        ).provideOptions({ guards: {} }).safe;
+        ).provideOptions({
+          guards: {},
+          datas: {
+            defaultData: () => 0,
+            any: () => 'any',
+          },
+        }).safe;
       expect(machine).toThrowError('Guard "cond" is not provided');
     });
   });
@@ -260,6 +318,7 @@ describe('Errors', () => {
     const machine = createLogic(
       {
         initial: 'idle',
+        data: 'defaultData',
         states: {
           idle: {
             always: {
@@ -289,6 +348,10 @@ describe('Errors', () => {
           arg.val = 200;
         },
       },
+      datas: {
+        defaultData: ctx => ctx.val,
+        val: ctx => ctx.val,
+      },
     });
     const func = interpret(machine);
     test('#2: 10 => 14', () => {
@@ -296,6 +359,75 @@ describe('Errors', () => {
       const safe = () => func(arg);
       expect(safe).toThrowError(
         `Cannot assign to read only property 'val' of object '#<Object>'`,
+      );
+    });
+  });
+
+  describe('#8: Missing data function', () => {
+    test('#1: config.data exists but no corresponding function in datas', () => {
+      const machine = () =>
+        createLogic(
+          {
+            initial: 'idle',
+            data: 'missingData',
+            states: {
+              idle: {
+                always: 'final',
+              },
+              final: {
+                data: 'finalData',
+              },
+            },
+          },
+          {} as any,
+        ).provideOptions({
+          datas: {
+            finalData: () => 'final',
+            // missingData is NOT provided
+          },
+        }).safe;
+      expect(machine).toThrowError(
+        'At least one data function must be provided',
+      );
+    });
+
+    test('#2: config.data exists but datas object is empty', () => {
+      const machine = () =>
+        createLogic(
+          {
+            initial: 'idle',
+            data: 'defaultData',
+            states: {
+              idle: {
+                data: 'result',
+              },
+            },
+          },
+          {} as any,
+        ).provideOptions({
+          datas: {},
+        }).safe;
+      expect(machine).toThrowError(
+        'At least one data function must be provided',
+      );
+    });
+
+    test('#3: config.data exists but datas is not provided', () => {
+      const machine = () =>
+        createLogic(
+          {
+            initial: 'idle',
+            data: 'defaultData',
+            states: {
+              idle: {
+                data: 'result',
+              },
+            },
+          },
+          {} as any,
+        ).safe;
+      expect(machine).toThrowError(
+        'At least one data function must be provided',
       );
     });
   });

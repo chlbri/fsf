@@ -1,5 +1,5 @@
-import { interpret } from '../../interpreter';
-import { createLogic } from '../../Machine';
+import { interpret } from '../../../interpreter';
+import { createLogic } from '../../../Machine';
 
 describe('#2: explicit returns, (tidious guards), try to modify freezedArgs returns errors', () => {
   type Context = {
@@ -23,11 +23,10 @@ describe('#2: explicit returns, (tidious guards), try to modify freezedArgs retu
   ];
 
   describe('Workflow #1', () => {
-    // #region Preparation
-
     const machine = createLogic(
       {
         initial: 'idle',
+        data: 'sendID',
         states: {
           idle: {
             always: 'fetch',
@@ -96,7 +95,6 @@ describe('#2: explicit returns, (tidious guards), try to modify freezedArgs retu
     const getUserID = interpret(machine, {
       context: { iterator: 0, errors: [] },
     });
-    // #endregion
 
     test('01 -> Returns ID if ids are in DB', async () => {
       const id = await getUserID(DB[0]);
